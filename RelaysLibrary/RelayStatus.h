@@ -16,7 +16,7 @@
 #define RelayStatus_power
 
 //#define RelayStatus_debug
-#define RelayStatus_debug_power
+//#define RelayStatus_debug_power
 //#define RelayStatus_debug_onoff
 
 #define _POWER_SAMPLE_SIZE 20  // 50Htz => 1 Htz 20ms

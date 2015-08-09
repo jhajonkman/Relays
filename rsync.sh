@@ -5,4 +5,7 @@
 #
 #  Created by Jeroen Jonkman on 23-06-15.
 #
-rsync -tarvg /Users/jeroenjonkman/Developer/Relays/ /Volumes/jeroenjonkman/Developer/Relays/
+MAC020="/Users/jeroenjonkman/Developer/Relays/"
+MAC001="/Volumes/jeroenjonkman/Developer/Relays/"
+rsync -taruvg ${MAC020} ${MAC001}
+rsync -taruvg ${MAC001} ${MAC020}
