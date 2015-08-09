@@ -1,0 +1,87 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXFileReference section */
+		0EF42AAC1B3999F200F2E270 /* rsync.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = rsync.sh; sourceTree = "<group>"; };
+		0EFE94391B38793100A3A900 /* Relays.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Relays.cpp; path = RelaysLibrary/Relays.cpp; sourceTree = "<group>"; };
+		0EFE943A1B38793100A3A900 /* Relays.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Relays.h; path = RelaysLibrary/Relays.h; sourceTree = "<group>"; };
+		0EFE943B1B38793100A3A900 /* RelayStatus.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RelayStatus.cpp; path = RelaysLibrary/RelayStatus.cpp; sourceTree = "<group>"; };
+		0EFE943C1B38793100A3A900 /* RelayStatus.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RelayStatus.h; path = RelaysLibrary/RelayStatus.h; sourceTree = "<group>"; };
+		0EFE943D1B38793100A3A900 /* RelayTask.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RelayTask.cpp; path = RelaysLibrary/RelayTask.cpp; sourceTree = "<group>"; };
+		0EFE943E1B38793100A3A900 /* RelayTask.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RelayTask.h; path = RelaysLibrary/RelayTask.h; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		0EC0090D1B2C275600F0A508 = {
+			isa = PBXGroup;
+			children = (
+				0EF42AAC1B3999F200F2E270 /* rsync.sh */,
+				0EFE94391B38793100A3A900 /* Relays.cpp */,
+				0EFE943A1B38793100A3A900 /* Relays.h */,
+				0EFE943B1B38793100A3A900 /* RelayStatus.cpp */,
+				0EFE943C1B38793100A3A900 /* RelayStatus.h */,
+				0EFE943D1B38793100A3A900 /* RelayTask.cpp */,
+				0EFE943E1B38793100A3A900 /* RelayTask.h */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXProject section */
+		0EC0090E1B2C275600F0A508 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0630;
+			};
+			buildConfigurationList = 0EC009111B2C275600F0A508 /* Build configuration list for PBXProject "Relays" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 0EC0090D1B2C275600F0A508;
+			productRefGroup = 0EC0090D1B2C275600F0A508;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+			);
+		};
+/* End PBXProject section */
+
+/* Begin XCBuildConfiguration section */
+		0EC0090F1B2C275600F0A508 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+			};
+			name = Debug;
+		};
+		0EC009101B2C275600F0A508 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		0EC009111B2C275600F0A508 /* Build configuration list for PBXProject "Relays" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0EC0090F1B2C275600F0A508 /* Debug */,
+				0EC009101B2C275600F0A508 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 0EC0090E1B2C275600F0A508 /* Project object */;
+}
