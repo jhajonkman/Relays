@@ -382,7 +382,7 @@ void Relays::loopPower()
     Serial.println("Relays::loopPower");
 #endif
     for( int i = 0 ; i < _statusSize ; i++ ) {
-        if (_looper%(_statusSize+1) == i) {
+        if (_looper%(_statusSize) == i) {
             _status[i].loop();
         }
     }
