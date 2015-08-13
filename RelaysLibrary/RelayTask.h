@@ -182,15 +182,15 @@ private:
     uint16_t    _relay      = 0x0000;       // RELAYTASK_RELAY_*
     uint32_t    _data       = 0x00000000;
 
-    uint32_t timeToData(uint8_t month, uint8_t day_of_month, uint8_t day_of_week, uint8_t hour, uint8_t minute);
+    static uint32_t timeToData(uint8_t month, uint8_t day_of_month, uint8_t day_of_week, uint8_t hour, uint8_t minute);
     
-    uint32_t operatorToData(uint8_t operatortype, int value);
+    static uint32_t operatorToData(uint8_t operatortype, int value);
     
-    uint32_t timeoutToData(uint8_t delayType, uint16_t delay);
+    static uint32_t timeoutToData(uint8_t delayType, uint16_t delay);
     
     void setTask(uint8_t task);
     
-    uint16_t yearday(time_t time);
+    // uint16_t yearday(time_t time);
     
 #ifdef RelayTask_debug
 

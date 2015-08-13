@@ -751,21 +751,13 @@ void Relays::relaysOn() {
 void Relays::relayOn(uint8_t relayPin) {
     uint8_t index = getRelayStatusIndex(relayPin);
     if (index <= _RELAYS_MAX_STATUS_SIZE && _status[index].isSetup()) {
-        if( _analogWrite ) {
-            _status[index].relayOn(_maxRelay);
-        } else {
-            _status[index].relayOn();
-        }
+        _status[index].relayOn();
     }
 }
 
 void Relays::relayOn(int relayID) {
     if (relayID <= _RELAYS_MAX_STATUS_SIZE && _status[relayID].isSetup()) {
-        if( _analogWrite ) {
-            _status[relayID].relayOn(_maxRelay);
-        } else {
-            _status[relayID].relayOn(RELAYSTATUS_MODE_MANUAL);
-        }
+        _status[relayID].relayOn(RELAYSTATUS_MODE_MANUAL);
     }
 }
 
@@ -787,6 +779,14 @@ void Relays::relayOff(int relayID) {
     }
 }
 
+void Relays::powerOffset(uint8_t powerPin, int8_t offset) {
+    uint8_t index = getPowerStatusIndex(powerPin);
+    if (index <= _RELAYS_MAX_STATUS_SIZE && _status[index].isSetup()) {
+        _status[index].setPowerOffset(offset);
+    }
+}
+
+#ifdef _RELAYS_digitalReadOutputPin
 int Relays::digitalReadOutputPin(uint8_t pin)
 {
     uint8_t bit = digitalPinToBitMask(pin);
@@ -811,6 +811,7 @@ int Relays::digitalReadOutputPin(uint8_t pin)
 #endif
     return (*portOutputRegister(port) & bit) ? HIGH : LOW;
 }
+#endif
 
 boolean Relays::checkRelay(uint8_t relayPin)
 {
@@ -836,6 +837,17 @@ uint8_t Relays::getRelayStatusIndex(uint8_t relayPin)
         }
     return index;
 }
+
+uint8_t Relays::getPowerStatusIndex(uint8_t powerPin)
+{
+    uint8_t index = _RELAYS_MAX_STATUS_SIZE + 1;
+    for( uint8_t i = 0 ; i < _statusSize ; i++ )
+        if ( _status[i].powerPin() == powerPin ) {
+            index = i;
+        }
+    return index;
+}
+
 
 #ifdef Relay_print
 String Relays::loopStringStatus() {

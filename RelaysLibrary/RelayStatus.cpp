@@ -75,7 +75,7 @@ void RelayStatus::setup(uint8_t relayPin, int powerPin, uint16_t defaultMode, bo
         bitWrite(_status,RELAYSTATUS_STATUS_POWER_BIT,true);
 #ifdef RelayStatus_debug_power
         Serial.print("setup powertype=");
-        Serial.println(_powerPin & 0xFF00);
+        Serial.println(powerType);
 #endif
         switch (powerType) {
             case RELAYSTATUS_POWER_TYPE_0 >> 8:
@@ -387,6 +387,11 @@ uint16_t RelayStatus::getPower()
     }
     return 0;
 }
+
+void RelayStatus::setPowerOffset(int8_t offset)
+{
+    _powerOffset = offset;
+}
 #endif
 
 uint8_t RelayStatus::getTimerType()
@@ -475,11 +480,12 @@ uint16_t RelayStatus::getPowerX(uint8_t count)
 
 uint16_t RelayStatus::_getRawPower()
 {
-    uint16_t  _max      = _DEFAULT_POWER_VALUE;
-    uint16_t  _min      = _DEFAULT_POWER_VALUE;
-    //int       _sample   = _DEFAULT_POWER_VALUE;
+    uint16_t  _default  = _DEFAULT_POWER_VALUE + _powerOffset;
+    uint16_t  _max      = _default;
+    uint16_t  _min      = _default;
+    //int       _sample   = _default;
     uint16_t  _count    = 0;
-    uint16_t  _power    = _DEFAULT_POWER_VALUE;;
+    uint16_t  _power    = _default;
     long      _start    = millis();
     long      _stop     = _start + _POWER_SAMPLE_SIZE;
     // Overrun protection
@@ -490,21 +496,25 @@ uint16_t RelayStatus::_getRawPower()
         _max = max(_max,_sample);
         _count++;
     }
-    //_power = max(DEFAULT_VALUE-_min,_max-_DEFAULT_POWER_VALUE);
-    _power = ((_DEFAULT_POWER_VALUE-_min) + (_max-_DEFAULT_POWER_VALUE))/2;
+    //_power = max(DEFAULT_VALUE-_min,_max-_default);
+    _power = ((_default-_min) + (_max-_default))/2;
 #ifdef RelayStatus_power_debug
     Serial.print("Count = " );
     Serial.print(_count);
+    Serial.print(", default = ");
+    Serial.print(_default);
+    Serial.print(", offset = ");
+    Serial.print(_powerOffset);
     Serial.print(", raw power = ");
     Serial.print(_power,3);
     Serial.print(", min = ");
     Serial.print(_min);
     Serial.print(", mindiff = ");
-    Serial.print(_DEFAULT_POWER_VALUE-_min);
+    Serial.print(_default-_min);
     Serial.print(", max = ");
     Serial.print(_max);
     Serial.print(", maxdiff = ");
-    Serial.print(_max-_DEFAULT_POWER_VALUE);
+    Serial.print(_max-_default);
 #endif
     _power = max(0,_power - _POWER_TRIGGER_VALUE);
 #ifdef RelayStatus_power_debug

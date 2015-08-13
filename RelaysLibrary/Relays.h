@@ -14,10 +14,14 @@
 #define Relays_h
 
 #define Relay_power
+
 //#define Relay_debug
 //#define Relay_set_debug
 //#define Relay_time_debug
 //#define Relay_print
+
+
+//#define _RELAYS_digitalReadOutputPin
 
 #if ARDUINO >= 100
     #include "Arduino.h"
@@ -34,13 +38,13 @@
 #ifdef RelayTask_debug
 #define _RELAYS_MAX_TASK_SIZE       8
 #else
-#define _RELAYS_MAX_TASK_SIZE       32
+#define _RELAYS_MAX_TASK_SIZE       24
 #endif
 
 #ifdef RelayStatus_debug
 #define _RELAYS_MAX_STATUS_SIZE     4
 #else
-#define _RELAYS_MAX_STATUS_SIZE     16
+#define _RELAYS_MAX_STATUS_SIZE     12
 #endif
 
 #ifdef Relay_debug
@@ -126,6 +130,8 @@ public:
     void relayOff(int relayID);
 
     void relayOff(uint8_t relayPin);
+
+    void powerOffset(uint8_t powerPin, int8_t offset);
     
     uint8_t relayPin();
     
@@ -168,7 +174,6 @@ private:
     uint8_t         _taskSize       = 0;
     uint16_t        _taskID         = 0;
     uint8_t         _looper         = 0;
-    bool            _analogWrite    = false;
     bool            _setup          = false;
     uint8_t         _maxRelay       = _RELAYS_MAX;
     unsigned long   _last_run       = 0;
@@ -177,11 +182,14 @@ private:
     int             _light          = _RELAYS_LIGHT_NOSET;
     time_t          _lastTime       = 0;
     
+#ifdef _RELAYS_digitalReadOutputPin
     int         digitalReadOutputPin(uint8_t pin);
+#endif
     
     bool        checkRelay(uint8_t relayPin);
     
     uint8_t     getRelayStatusIndex(uint8_t relayPin);
+    uint8_t     getPowerStatusIndex(uint8_t powerPin);
 #ifdef Relay_print
     String      loopStringStatus();
 #endif

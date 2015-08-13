@@ -471,10 +471,12 @@ bool RelayTask::checkTime(uint8_t month, uint8_t day_of_month, uint8_t day_of_we
     return true;
 }
 
+/*
 uint16_t RelayTask::yearday(time_t time)
 {
     return 0;
 }
+*/
 
 #ifdef RelayTask_debug
 

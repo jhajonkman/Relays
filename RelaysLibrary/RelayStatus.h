@@ -20,8 +20,8 @@
 //#define RelayStatus_debug_onoff
 
 #define _POWER_SAMPLE_SIZE 20  // 50Htz => 1 Htz 20ms
-#define _DEFAULT_POWER_VALUE 512
-#define _POWER_TRIGGER_VALUE 2.0 // +/- 30 watt correction
+#define _DEFAULT_POWER_VALUE 512 
+#define _POWER_TRIGGER_VALUE 2.0 // +/- 80 watt correction a 20 Amp
 
 #define RELAYSTATUS_POWER_AMPS_5 9.765 // 2,25 watt at 230 volt
 #define RELAYSTATUS_POWER_AMPS_20 39.0625 // 9 watt at 230 volt
@@ -148,6 +148,8 @@ public:
     
 #ifdef RelayStatus_power
     uint16_t getPower();
+    
+    void setPowerOffset(int8_t offset);
 #endif
     
     uint8_t getTimerType();
@@ -170,11 +172,12 @@ private:
     uint8_t     _status         = 0x00;
     uint8_t     _relayPin       = 0;
     uint8_t     _powerPin       = 0;
-    uint8_t     _mode           = RELAYSTATUS_MODE_ALL;
-    uint8_t     _defaultMode    = RELAYSTATUS_MODE_ALL;
+    uint8_t     _mode           = RELAYSTATUS_MODE_DEFAULT;
+    uint8_t     _defaultMode    = RELAYSTATUS_MODE_DEFAULT;
     uint16_t    _timer          = RELAYSTATUS_TIMER_NONE;
 #ifdef RelayStatus_power
     uint16_t    _power          = 0;
+    int8_t      _powerOffset    = 0;
 #endif
     
     void setOn(bool on);
