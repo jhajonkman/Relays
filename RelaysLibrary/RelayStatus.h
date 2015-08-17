@@ -15,6 +15,9 @@
 
 #define RelayStatus_power
 
+//#define RelayStatus_power_turning
+
+
 //#define RelayStatus_debug
 //#define RelayStatus_debug_power
 //#define RelayStatus_debug_onoff
@@ -51,6 +54,7 @@
 #define RELAYSTATUS_STATUS_DEFAULT_ON   0x04 // 1 bit  .....1..
 #define RELAYSTATUS_STATUS_POWER_ON     0x08 // 1 bit  ....1...
 #define RELAYSTATUS_STATUS_POWER_TYPE   0x30 // 1 bit  ..11....
+#define RELAYSTATUS_STATUS_DISABLED     0x80 // 1 bit  1.......
 
 
 #define RELAYSTATUS_STATUS_SETUP_BIT        0
@@ -59,6 +63,7 @@
 #define RELAYSTATUS_STATUS_POWER_BIT        3
 #define RELAYSTATUS_STATUS_A5_BIT           4
 #define RELAYSTATUS_STATUS_A20_BIT          5
+#define RELAYSTATUS_STATUS_DISABLED_BIT     7
 
 
 #define RELAYSTATUS_MODE_NONE           0x00    // ........

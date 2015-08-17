@@ -65,8 +65,12 @@ void RelayStatus::setup(uint8_t relayPin, int powerPin, uint16_t defaultMode, bo
     _powerPin       = powerPin & 0x00FF;
     _mode           = defaultMode;
     _defaultMode    = defaultMode;
-    pinMode(_relayPin,OUTPUT);
-    digitalWrite(_relayPin,_RELAYSTATUS_OFF);
+    if (_relayPin > 0) {
+        pinMode(_relayPin,OUTPUT);
+        digitalWrite(_relayPin,_RELAYSTATUS_OFF);
+    } else {
+        bitWrite(_status,RELAYSTATUS_STATUS_DISABLED_BIT,true);
+    }
     bitWrite(_status,RELAYSTATUS_STATUS_DEFAULT_ON_BIT,defaultOn);
     if (defaultOn) {
         relayOn(_mode);
@@ -498,28 +502,35 @@ uint16_t RelayStatus::_getRawPower()
     }
     //_power = max(DEFAULT_VALUE-_min,_max-_default);
     _power = ((_default-_min) + (_max-_default))/2;
-#ifdef RelayStatus_power_debug
-    Serial.print("Count = " );
+#ifdef RelayStatus_power_turning
+    int maxdiff = _max-_default;
+    int mindiff = _default-_min;
+    int diff = maxdiff - mindiff;
+    Serial.print("_powerPin=" );
+    Serial.print((_powerPin-18)+0xA0,HEX);
+    Serial.print(",Count=" );
     Serial.print(_count);
-    Serial.print(", default = ");
+    Serial.print(",default=");
     Serial.print(_default);
-    Serial.print(", offset = ");
+    Serial.print(",offset=");
     Serial.print(_powerOffset);
-    Serial.print(", raw power = ");
-    Serial.print(_power,3);
-    Serial.print(", min = ");
+    Serial.print(",raw_power=");
+    Serial.print(_power);
+    Serial.print(",min=");
     Serial.print(_min);
-    Serial.print(", mindiff = ");
-    Serial.print(_default-_min);
-    Serial.print(", max = ");
+    Serial.print(",max=");
     Serial.print(_max);
-    Serial.print(", maxdiff = ");
-    Serial.print(_max-_default);
+    Serial.print(",mindiff=");
+    Serial.print(mindiff);
+    Serial.print(",maxdiff=");
+    Serial.print(maxdiff);
+    Serial.print(",diff=");
+    Serial.print(diff);
 #endif
     _power = max(0,_power - _POWER_TRIGGER_VALUE);
-#ifdef RelayStatus_power_debug
-    Serial.print(", power = ");
-    Serial.print(_power,3);
+#ifdef RelayStatus_power_turning
+    Serial.print(",power=");
+    Serial.print(_power);
     Serial.println();
 #endif
     return _power;
