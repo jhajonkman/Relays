@@ -51,7 +51,7 @@
 
 #define RELAYSTATUS_STATUS_SETUP        0x01 // 1 bit  .......1
 #define RELAYSTATUS_STATUS_ON           0x02 // 1 bit  ......1.
-#define RELAYSTATUS_STATUS_DEFAULT_ON   0x04 // 1 bit  .....1..
+#define RELAYSTATUS_STATUS_DEFAULT_ ON   0x04 // 1 bit  .....1..
 #define RELAYSTATUS_STATUS_POWER_ON     0x08 // 1 bit  ....1...
 #define RELAYSTATUS_STATUS_POWER_TYPE   0x30 // 1 bit  ..11....
 #define RELAYSTATUS_STATUS_DISABLED     0x80 // 1 bit  1.......
@@ -77,7 +77,7 @@
 #define RELAYSTATUS_MODE_TRIGGER        0x80    // 1.......
 #define RELAYSTATUS_MODE_ALL            0xFF    // 11111111
 #define RELAYSTATUS_MODE_DEFAULT        RELAYSTATUS_MODE_ALL ^ ( RELAYSTATUS_MODE_MANUAL |RELAYSTATUS_MODE_EXTRA )
-
+#define RELAYSTATUS_MODE_RESTORE        RELAYSTATUS_MODE_ALL ^ ( RELAYSTATUS_MODE_EXTRA )
 
 #define RELAYSTATUS_TIMER_BIT           0
 

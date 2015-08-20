@@ -13,12 +13,16 @@
 
 #define Relays_h
 
-#define Relay_power
+#define Relays_power
+#define Relays_save
 
-//#define Relay_debug
-//#define Relay_set_debug
-//#define Relay_time_debug
-//#define Relay_print
+#define Relays_trigger
+//#define Relays_Timer
+
+//#define Relays_debug
+//#define Relays_set_debug
+//#define Relays_time_debug
+//#define Relays_print
 
 
 //#define _RELAYS_digitalReadOutputPin
@@ -31,7 +35,7 @@
 
 #include <RelayStatus.h>
 #include <RelayTask.h>
-#include <DS3232RTC.h>
+#include <JRTC.h>
 #include <Time.h>
 #include <ByteBuffer.h>
 
@@ -68,6 +72,8 @@
 #define XBEE_RELAY_HEADER           0x20
 #define XBEE_POWER_HEADER           0x80
 
+#define _RELAYS_SAVE_DEFAULT        0xFFFF
+
 class Relays
 {
 public:
@@ -79,20 +85,10 @@ public:
     
     void loopStatus();
 
-#ifdef Relay_power
+#ifdef Relays_power
     void loopPower();
 #endif
     
-    int addRelay( uint8_t pin );
-    
-    int addRelay( uint8_t pin, bool defaultOn );
-
-    int addRelay( uint8_t pin, uint16_t defaultMode);
-
-    int addRelay( uint8_t relayPin, int16_t powerPin);
-    
-    int addRelay( uint8_t relayPin, int16_t powerPin, bool defaultOn);
-
     int addRelay( uint8_t relayPin, int16_t powerPin, bool defaultOn, uint16_t defaultMode);
 
     int addTaskTime( uint16_t relays, bool on, uint8_t month, uint8_t day_of_month, uint8_t day_of_week, uint8_t hour, uint8_t minute);
@@ -102,9 +98,10 @@ public:
     int addTaskHumidity( uint16_t relays, bool on, uint8_t operatortype, int value);
 
     int addTaskLight( uint16_t relays, bool on, uint8_t operatortype, int value);
-
+#ifdef Relays_trigger
     int addTaskTrigger( uint16_t relays, bool on, uint8_t delayType, uint16_t delay);
-
+#endif Relays_trigger
+#ifdef Relays_Timer
     bool setTaskDelayInSeconds(uint16_t taskID, uint16_t delay);
 
     bool setTaskDelayInMinutes(uint16_t taskID, uint16_t delay);
@@ -112,6 +109,7 @@ public:
     bool setTaskDelayInHours(uint16_t taskID, uint16_t delay);
     
     bool setTaskDelayInDays(uint16_t taskID, uint16_t delay);
+#endif
 
     uint8_t getPowerPin( uint8_t relayPin );
     
@@ -173,7 +171,7 @@ private:
     uint16_t        _statusID       = 0; //
     uint8_t         _taskSize       = 0;
     uint16_t        _taskID         = 0;
-    uint8_t         _looper         = 0;
+    uint8_t         _looper         = 1;
     bool            _setup          = false;
     uint8_t         _maxRelay       = _RELAYS_MAX;
     unsigned long   _last_run       = 0;
@@ -181,17 +179,23 @@ private:
     int             _humidity       = _RELAYS_HUMIDITY_NOSET;
     int             _light          = _RELAYS_LIGHT_NOSET;
     time_t          _lastTime       = 0;
-    
-#ifdef _RELAYS_digitalReadOutputPin
-    int         digitalReadOutputPin(uint8_t pin);
+#ifdef Relays_save
+    jrtcElements_t  _save;
 #endif
     
-    bool        checkRelay(uint8_t relayPin);
+#ifdef _RELAYS_digitalReadOutputPin
+    int             digitalReadOutputPin(uint8_t pin);
+#endif
     
-    uint8_t     getRelayStatusIndex(uint8_t relayPin);
-    uint8_t     getPowerStatusIndex(uint8_t powerPin);
-#ifdef Relay_print
-    String      loopStringStatus();
+    bool            checkRelay(uint8_t relayPin);
+    
+    uint8_t         getRelayStatusIndex(uint8_t relayPin);
+    uint8_t         getPowerStatusIndex(uint8_t powerPin);
+#ifdef Relays_save
+    void            saveStatus();
+#endif
+#ifdef Relays_print
+    String          loopStringStatus();
 #endif
 };
 

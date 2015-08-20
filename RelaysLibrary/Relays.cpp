@@ -19,32 +19,39 @@
 
 void Relays::setup()
 {
-    _statusSize = 0;
-    _taskSize = 0;
-    _taskID = 0;
     _setup = true;
     if( timeStatus() == timeSet ) {
         _lastTime = now();
     }
+#ifdef Relays_save
+    _save.lasttime = 0;
+    if (RTC.getDataStatus()) {
+        RTC.getData(&_save);
+        RTC.setDataStatus(false);
+    }
+#endif
 }
 
 void Relays::loop()
 {
     unsigned long m_seconds = millis();
     if (_last_run < m_seconds) {
-#ifdef Relay_debug
+#ifdef Relays_debug
         Serial.println("Relays::loop next run.");
 #endif
         loopTask();
         loopStatus();
-#ifdef Relay_power
+#ifdef Relays_power
         loopPower();
 #endif
-#ifdef Relay_print
         if (_looper%15==0 && _setup) {
+#ifdef Relays_print
             Serial.print(loopStringStatus());
-        }
 #endif
+#ifdef Relays_save
+            saveStatus();
+#endif
+        }
         _last_run += RELAYS_LOOP_CHECK;
         _looper ++;
     }
@@ -65,7 +72,7 @@ void Relays::loopTask()
                     }
                     // Check defaultMode of the RelayStatus
                     uint8_t defaultMode = _status[j].getDefaultMode();
-#ifdef Relay_time_debug
+#ifdef Relays_time_debug
                     Serial.print("Relays::loopTask Time defaultMode=");
                     Serial.print(defaultMode,BIN);
                     Serial.print(", RELAYSTATUS_MODE_TIME=");
@@ -109,7 +116,7 @@ void Relays::loopTask()
                     }
                     // Check defaultMode of the RelayStatus
                     uint8_t defaultMode = _status[j].getDefaultMode();
-#ifdef Relay_debug
+#ifdef Relays_debug
                     Serial.print("Relays::loopTask Temperature defaultMode=");
                     Serial.print(defaultMode,BIN);
                     Serial.print(", RELAYSTATUS_MODE_TEMPERATURE=");
@@ -159,7 +166,7 @@ void Relays::loopTask()
                     }
                     // Check relay task with RelayStatus
                     uint8_t defaultMode = _status[j].getDefaultMode();
-#ifdef Relay_debug
+#ifdef Relays_debug
                     Serial.print("Relays::loopTask Humidity defaultMode=");
                     Serial.print(defaultMode,BIN);
                     Serial.print(", RELAYSTATUS_MODE_HUMIDITY=");
@@ -209,7 +216,7 @@ void Relays::loopTask()
                     }
                     // Check defaultMode of the RelayStatus
                     uint8_t defaultMode = _status[j].getDefaultMode();
-#ifdef Relay_debug
+#ifdef Relays_debug
                     Serial.print("Relays::loopTask Light defaultMode=");
                     Serial.print(defaultMode,BIN);
                     Serial.print(", RELAYSTATUS_MODE_LIGHT=");
@@ -262,7 +269,7 @@ void Relays::loopStatus()
     for (uint8_t j = 0 ; j < _statusSize; j++) {
         // Check relay task with RelayStatus
         if (_status[j].isTimer()) {
-#ifdef Relay_time_debug
+#ifdef Relays_time_debug
             text += "Relays::loopStatus relayPin=";
             text += _status[j].relayPin();
             text += ", timerType=";
@@ -281,7 +288,7 @@ void Relays::loopStatus()
                 case RELAYSTATUS_DELAYTYPE_HOURS:
                     break;
                 case RELAYSTATUS_DELAYTYPE_MINUTES:
-#ifdef Relay_time_debug
+#ifdef Relays_time_debug
                     text += ", nowMinute=";
                     text += nowMinute;
                     text += ", lastMinute=";
@@ -292,12 +299,12 @@ void Relays::loopStatus()
                         if (nowMinute < lastMinute)
                             lastMinute += 60;
                         uint8_t deltaMinute = nowMinute - lastMinute;
-#ifdef Relay_time_debug
+#ifdef Relays_time_debug
                         text += ", deltaMinute=";
                         text += deltaMinute;
 #endif
                         delay -= deltaMinute;
-#ifdef Relay_time_debug
+#ifdef Relays_time_debug
                         text += ", delay=";
                         text += delay;
                         text += "\n";
@@ -309,14 +316,14 @@ void Relays::loopStatus()
                         } else {
                             _status[j].setTimer(RELAYSTATUS_DELAYTYPE_MINUTES,delay);
                         }
-#ifdef Relay_time_debug
+#ifdef Relays_time_debug
                     } else {
                         text += "\n";
 #endif
                     }
                     break;
                 case RELAYSTATUS_DELAYTYPE_SECONDS:
-#ifdef Relay_time_debug
+#ifdef Relays_time_debug
                     text += ", nowSeconds=";
                     text += nowSeconds;
                     text += ", lastSeconds=";
@@ -327,32 +334,32 @@ void Relays::loopStatus()
                         if (nowSeconds < lastSeconds)
                             lastSeconds += 60;
                         uint8_t deltaSeconds = nowSeconds - lastSeconds;
-#ifdef Relay_time_debug
+#ifdef Relays_time_debug
                         text += ", deltaSeconds=";
                         text += deltaSeconds;
 #endif
                         delay = (delay <= deltaSeconds)?0:delay - deltaSeconds;
-#ifdef Relay_time_debug
+#ifdef Relays_time_debug
                         text += ", delay=";
                         text += delay;
 #endif
                         if (delay <= 1) {
-#ifdef Relay_time_debug
+#ifdef Relays_time_debug
                             text += " TIMER PASSED, ";
 #endif
                             if (_status[j].isOn()) {
-#ifdef Relay_time_debug
+#ifdef Relays_time_debug
                                 text += " SET OFF!\n";
 #endif
                                 _status[j].relayOff(RELAYSTATUS_MODE_TIMER);
                             } else {
-#ifdef Relay_time_debug
+#ifdef Relays_time_debug
                                 text += " SET ON!\n";
 #endif
                                 _status[j].relayOn(RELAYSTATUS_MODE_TIMER);
                             }
                         } else {
-#ifdef Relay_time_debug
+#ifdef Relays_time_debug
                             text += "\n";
 #endif
                             _status[j].setTimer(RELAYSTATUS_DELAYTYPE_SECONDS,delay);
@@ -371,14 +378,16 @@ void Relays::loopStatus()
 #endif
     }
     _lastTime = nowTime;
+#ifdef RelayStatus_debug
     Serial.print(text);
+#endif
     //return text;
 }
 
-#ifdef Relay_power
+#ifdef Relays_power
 void Relays::loopPower()
 {
-#ifdef Relay_debug
+#ifdef Relays_debug
     Serial.println("Relays::loopPower");
 #endif
     for( int i = 0 ; i < _statusSize ; i++ ) {
@@ -389,34 +398,10 @@ void Relays::loopPower()
 }
 #endif
 
-int Relays::addRelay( uint8_t relayPin )
-{
-    return addRelay(relayPin, 0, false, RELAYSTATUS_MODE_DEFAULT);
-}
-
-int Relays::addRelay( uint8_t relayPin, bool defaultOn)
-{
-    return addRelay(relayPin, 0, defaultOn,RELAYSTATUS_MODE_DEFAULT);
-}
-
-int Relays::addRelay( uint8_t relayPin, uint16_t defaultMode)
-{
-    return addRelay(relayPin, 0, false,defaultMode);
-}
-
-int Relays::addRelay( uint8_t relayPin, int16_t powerPin)
-{
-    return addRelay(relayPin, powerPin, false, RELAYSTATUS_MODE_DEFAULT);
-}
-int Relays::addRelay( uint8_t relayPin, int16_t powerPin, bool defaultOn)
-{
-    return addRelay(relayPin, powerPin, defaultOn, RELAYSTATUS_MODE_DEFAULT);
-}
-                     
 int Relays::addRelay( uint8_t relayPin, int16_t powerPin, bool defaultOn, uint16_t defaultMode)
 {
     if ( _statusSize < _RELAYS_MAX_STATUS_SIZE ) {
-#ifdef Relay_debug
+#ifdef Relays_debug
             Serial.print("Relays::add: relayPin=");
             Serial.print(relayPin);
             if ( powerPin != 0 ) {
@@ -424,12 +409,31 @@ int Relays::addRelay( uint8_t relayPin, int16_t powerPin, bool defaultOn, uint16
                 Serial.print(powerPin);
             }
             Serial.println();
-#endif
+#endif Relays_debug
         RelayStatus status;
         status.setup(relayPin,powerPin,defaultMode,defaultOn);
+#ifdef Relays_save
+        if( _save.lasttime > 0 && _statusSize < 15) {
+#ifdef Relays_print
+            Serial.print("value=");
+            Serial.print(_save.value);
+#endif Relays_print
+            if (_save.value & (0x1 << _statusSize)) {
+#ifdef Relays_print
+                Serial.println(",on");
+#endif Relays_print
+                status.relayOn(RELAYSTATUS_MODE_RESTORE);
+            } else {
+#ifdef Relays_print
+                Serial.println(",off");
+#endif Relays_print
+                status.relayOff(RELAYSTATUS_MODE_RESTORE);
+            }
+        }
+#endif Relays_save
         _status[_statusSize] = status;
     } else {
-        Serial.println("Relays::add: ERROR OUT OF ARRAY!");
+        Serial.println("R:E01");
         return -1;
     }
     _statusSize++;
@@ -496,6 +500,7 @@ int Relays::addTaskLight( uint16_t relays, bool on, uint8_t operatortype, int va
     return -1;
 }
 
+#ifdef Relays_trigger
 int Relays::addTaskTrigger( uint16_t relays, bool on, uint8_t delayType, uint16_t delay)
 {
     if (_taskSize < _RELAYS_MAX_TASK_SIZE) {
@@ -510,7 +515,9 @@ int Relays::addTaskTrigger( uint16_t relays, bool on, uint8_t delayType, uint16_
     }
     return -1;
 }
+#endif Relays_trigger
 
+#ifdef Relays_Timer
 bool Relays::setTaskDelayInSeconds(uint16_t taskID, uint16_t delay)
 {
     if (_task[taskID].isSetup() && _task[taskID].isTimeoutTask()) {
@@ -542,6 +549,7 @@ bool Relays::setTaskDelayInDays(uint16_t taskID, uint16_t delay)
     }
     return false;
 }
+#endif Relays_Timer
 
 uint8_t Relays::getPowerPin( uint8_t relayPin ) {
     uint8_t powerPin = 0;
@@ -570,7 +578,7 @@ uint16_t Relays::power() {
             totalPower += power;
         }
     }
-#ifdef Relay_debug
+#ifdef Relays_debug
         Serial.print("Relay::power totalPower=");
         Serial.print(totalPower);
         Serial.print(", count=");
@@ -581,7 +589,7 @@ uint16_t Relays::power() {
 
 void Relays::setTemperature(int temperature)
 {
-#ifdef Relay_set_debug
+#ifdef Relays_set_debug
     Serial.print("Relay::setTemperature _temperature=");
     Serial.print(_temperature);
     Serial.print(", temperature=");
@@ -597,7 +605,7 @@ int Relays::getTemperature()
 
 void Relays::setHumidity(int humidity)
 {
-#ifdef Relay_set_debug
+#ifdef Relays_set_debug
     Serial.print("Relay::setHumidity _humidity=");
     Serial.print(_humidity);
     Serial.print(", humidity=");
@@ -613,7 +621,7 @@ int Relays::getHumidity()
 
 void Relays::setLight(int light)
 {
-#ifdef Relay_set_debug
+#ifdef Relays_set_debug
     Serial.print("Relay::setLight _light=");
     Serial.print(_light);
     Serial.print(", light=");
@@ -640,7 +648,7 @@ void Relays::trigger()
                     if ( (relay & 1<<j ) != (1<<j) ) {
                         continue;
                     }
-#ifdef Relay_time_debug
+#ifdef Relays_time_debug
                     Serial.print("Relays::trigger relayPin=");
                     Serial.print(_status[j].relayPin());
                     Serial.print(", timerType=");
@@ -649,7 +657,7 @@ void Relays::trigger()
                     Serial.print(_status[j].getTimerDelay());
 #endif
                     if (_task[i].isOn()) {
-#ifdef Relay_time_debug
+#ifdef Relays_time_debug
                         Serial.println(" SET ON!");
 #endif
                         _status[j].relayOn(RELAYSTATUS_MODE_TRIGGER);
@@ -657,7 +665,7 @@ void Relays::trigger()
                             _status[j].setTimer(_task[i].getTimerType(),_task[i].getTimerDelay());
                         }
                     } else {
-#ifdef Relay_time_debug
+#ifdef Relays_time_debug
                         Serial.println(" SET OFF!");
 #endif
                         _status[j].relayOff(RELAYSTATUS_MODE_TRIGGER);
@@ -753,12 +761,18 @@ void Relays::relayOn(uint8_t relayPin) {
     if (index <= _RELAYS_MAX_STATUS_SIZE && _status[index].isSetup()) {
         _status[index].relayOn();
     }
+#ifdef Relays_save
+    saveStatus();
+#endif
 }
 
 void Relays::relayOn(int relayID) {
     if (relayID <= _RELAYS_MAX_STATUS_SIZE && _status[relayID].isSetup()) {
         _status[relayID].relayOn(RELAYSTATUS_MODE_MANUAL);
     }
+#ifdef Relays_save
+    saveStatus();
+#endif
 }
 
 void Relays::relaysOff() {
@@ -771,12 +785,18 @@ void Relays::relayOff(uint8_t relayPin) {
     if (index <= _RELAYS_MAX_STATUS_SIZE && _status[index].isSetup()) {
         _status[index].relayOff();
     }
+#ifdef Relays_save
+    saveStatus();
+#endif
 }
 
 void Relays::relayOff(int relayID) {
     if (relayID <= _RELAYS_MAX_STATUS_SIZE && _status[relayID].isSetup()) {
         _status[relayID].relayOff(RELAYSTATUS_MODE_MANUAL);
     }
+#ifdef Relays_save
+    saveStatus();
+#endif
 }
 
 void Relays::powerOffset(uint8_t powerPin, int8_t offset) {
@@ -791,7 +811,7 @@ int Relays::digitalReadOutputPin(uint8_t pin)
 {
     uint8_t bit = digitalPinToBitMask(pin);
     uint8_t port = digitalPinToPort(pin);
-#ifdef Relay_debug
+#ifdef Relays_debug
     Serial.print("digitalReadOutputPin pin=");
     Serial.print(pin);
     Serial.print(", bit=");
@@ -800,12 +820,12 @@ int Relays::digitalReadOutputPin(uint8_t pin)
     Serial.print(port);
 #endif
     if (port == NOT_A_PIN) {
-#ifdef Relay_debug
+#ifdef Relays_debug
             Serial.println("");
 #endif
         return LOW;
     }
-#ifdef Relay_debug
+#ifdef Relays_debug
         Serial.print(" => ");
         Serial.println( (*portOutputRegister(port) & bit) ? "HIGH" : "LOW" );
 #endif
@@ -848,8 +868,21 @@ uint8_t Relays::getPowerStatusIndex(uint8_t powerPin)
     return index;
 }
 
+#ifdef Relays_save
+void Relays::saveStatus() {
+    _save.value = 0;
+    RTC.setDataStatus(true);
+    for( uint8_t i = 0 ; i < min(_statusSize,15) ; i++ ) {
+        if (_status[i].isOn()) {
+            _save.value |= (1 << i) ;
+        }
+    }
+    _save.lasttime = now();
+    RTC.setData(&_save);
+}
+#endif
 
-#ifdef Relay_print
+#ifdef Relays_print
 String Relays::loopStringStatus() {
     text = "Relays";
     for( int i = 0 ; i < _statusSize ; i++ ) {
