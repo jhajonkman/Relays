@@ -12,6 +12,14 @@
 #ifndef RelayTask_h
 #define RelayTask_h
 
+#define Relays_Basis_TaskTime
+
+#ifndef Relays_Basis_TaskTime
+#define RelayTask_month
+#define RelayTask_day_of_month
+#define RelayTask_day_of_week
+#endif Relays_Basis_TaskTime
+
 //#define RelayTask_debug
 //#define RelayTask_debug_time
 //#define RelayTask_debug_setTime
@@ -25,7 +33,8 @@
 
 #include <time.h>
 #include <ByteBuffer.h>
-
+//#include <Relays.h>
+#include <RelayStatus.h>
 
 #define RELAYTASK_RELAY_NONE  0x0000
 #define RELAYTASK_RELAY_01    0x0001
@@ -128,7 +137,11 @@ class RelayTask
 public:
     void setup();
 
+#ifdef Relays_Basis_TaskTime
+    void setTime(uint8_t hour, uint8_t minute);
+#else
     void setTime(uint8_t month, uint8_t day_of_month, uint8_t day_of_week, uint8_t hour, uint8_t minute);
+#endif Relays_Basis_TaskTime
     
     void setTemperature(uint8_t operatortype, int value);
     

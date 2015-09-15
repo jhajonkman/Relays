@@ -8,13 +8,7 @@
 //  Created by jeroenjonkman on 13-06-15
 // 
 
-#if ARDUINO >= 100
-    #include "Arduino.h"
-#else
-    #include "WProgram.h"
-#endif
-
-#include "RelayStatus.h"
+#include <RelayStatus.h>
 
 void RelayStatus::setup(uint8_t relayPin)
 {
@@ -526,6 +520,8 @@ uint16_t RelayStatus::_getRawPower()
     Serial.print(maxdiff);
     Serial.print(",diff=");
     Serial.print(diff);
+    Serial.print(",newoffset=");
+    Serial.print(_powerOffset + (diff/2));
 #endif
     _power = max(0,_power - _POWER_TRIGGER_VALUE);
 #ifdef RelayStatus_power_turning

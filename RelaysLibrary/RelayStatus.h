@@ -13,6 +13,10 @@
 
 #define RelayStatus_h
 
+#include <Arduino.h>
+//#include <Relays.h>
+#include <RelayTask.h>
+
 #define RelayStatus_power
 
 //#define RelayStatus_power_turning
@@ -36,14 +40,6 @@
 #define RELAYSTATUS_POWER_TYPE_20 0x0200
 #define RELAYSTATUS_POWER_TYPE_30 0x0300
 
-#if ARDUINO >= 100
-    #include "Arduino.h"
-#else
-    #include "WProgram.h"
-#endif
-
-#include <RelayTask.h>
-
 #define _RELAYSTATUS_ON                 LOW
 #define _RELAYSTATUS_OFF                HIGH
 
@@ -51,9 +47,10 @@
 
 #define RELAYSTATUS_STATUS_SETUP        0x01 // 1 bit  .......1
 #define RELAYSTATUS_STATUS_ON           0x02 // 1 bit  ......1.
-#define RELAYSTATUS_STATUS_DEFAULT_ ON   0x04 // 1 bit  .....1..
+#define RELAYSTATUS_STATUS_DEFAULT_ ON  0x04 // 1 bit  .....1..
 #define RELAYSTATUS_STATUS_POWER_ON     0x08 // 1 bit  ....1...
-#define RELAYSTATUS_STATUS_POWER_TYPE   0x30 // 1 bit  ..11....
+#define RELAYSTATUS_STATUS_POWER_TYPE   0x30 // 2 bit  ..11....
+#define RELAYSTATUS_STATUS_EXTRA        0x40 // 1 bit  .1......
 #define RELAYSTATUS_STATUS_DISABLED     0x80 // 1 bit  1.......
 
 
@@ -63,6 +60,7 @@
 #define RELAYSTATUS_STATUS_POWER_BIT        3
 #define RELAYSTATUS_STATUS_A5_BIT           4
 #define RELAYSTATUS_STATUS_A20_BIT          5
+#define RELAYSTATUS_STATUS_EXTRA_BIT        6
 #define RELAYSTATUS_STATUS_DISABLED_BIT     7
 
 
@@ -120,10 +118,6 @@ public:
     uint8_t getDefaultMode();
     
     void setRelayOn(bool on);
-    
-    //bool isRelayOn();
-
-    bool isDefaultRelayOn();
     
     uint8_t relayPin();
     

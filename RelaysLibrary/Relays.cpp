@@ -29,7 +29,16 @@ void Relays::setup()
         RTC.getData(&_save);
         RTC.setDataStatus(false);
     }
-#endif
+#endif Relays_save
+#ifdef Relays_at24
+    at24 = AT24();
+    _save.lasttime = 0;
+    if (at24.getDataStatus()) {
+        at24.getData(&_save);
+        at24.setDataStatus(false);
+    }
+#endif Relays_at24
+    
 }
 
 void Relays::loop()
@@ -50,6 +59,9 @@ void Relays::loop()
 #endif
 #ifdef Relays_save
             saveStatus();
+#endif
+#ifdef Relays_at24
+            saveStatusAt24();
 #endif
         }
         _last_run += RELAYS_LOOP_CHECK;
@@ -205,7 +217,7 @@ void Relays::loopTask()
             }
             if (_light != _RELAYS_LIGHT_NOSET && task == RELAYTASK_TASK_LIGHT) {
                 // Check light
-#ifdef RelayTask_debug || RelayStatus_debug
+#ifdef RelayStatus_debug
                 Serial.print("Relays::loopTask Light=");
                 Serial.println(_light);
 #endif
@@ -322,6 +334,7 @@ void Relays::loopStatus()
 #endif
                     }
                     break;
+#ifdef Relays_Timer
                 case RELAYSTATUS_DELAYTYPE_SECONDS:
 #ifdef Relays_time_debug
                     text += ", nowSeconds=";
@@ -366,6 +379,7 @@ void Relays::loopStatus()
                         }
                     }
                     break;
+#endif Relays_Timer
                 default:
                     break;
             }
@@ -390,7 +404,7 @@ void Relays::loopPower()
 #ifdef Relays_debug
     Serial.println("Relays::loopPower");
 #endif
-    for( int i = 0 ; i < _statusSize ; i++ ) {
+    for( uint16_t i = 0 ; i < _statusSize ; i++ ) {
         if (_looper%(_statusSize) == i) {
             _status[i].loop();
         }
@@ -431,6 +445,25 @@ int Relays::addRelay( uint8_t relayPin, int16_t powerPin, bool defaultOn, uint16
             }
         }
 #endif Relays_save
+#ifdef Relays_at24
+        if( _save.lasttime > 0 && _statusSize < 15) {
+#ifdef Relays_print
+            Serial.print("value=");
+            Serial.print(_save.value);
+#endif Relays_print
+            if (_save.value & (0x1 << _statusSize)) {
+#ifdef Relays_print
+                Serial.println(",on");
+#endif Relays_print
+                status.relayOn(RELAYSTATUS_MODE_RESTORE);
+            } else {
+#ifdef Relays_print
+                Serial.println(",off");
+#endif Relays_print
+                status.relayOff(RELAYSTATUS_MODE_RESTORE);
+            }
+        }
+#endif Relays_at24
         _status[_statusSize] = status;
     } else {
         Serial.println("R:E01");
@@ -440,6 +473,22 @@ int Relays::addRelay( uint8_t relayPin, int16_t powerPin, bool defaultOn, uint16
     return _statusID++;
 }
 
+#ifdef Relays_Basis_TaskTime
+int Relays::addTaskTime( uint16_t relays, bool on, uint8_t hour, uint8_t minute)
+{
+    if (_taskSize < _RELAYS_MAX_TASK_SIZE) {
+        RelayTask task;
+        task.setup();
+        task.setOn(on);
+        task.setRelay(relays);
+        task.setTime(hour,minute);
+        _task[_taskSize] = task;
+        _taskSize++;
+        return _taskID++;
+    }
+    return -1;
+}
+#else
 int Relays::addTaskTime( uint16_t relays, bool on, uint8_t month, uint8_t day_of_month, uint8_t day_of_week, uint8_t hour, uint8_t minute)
 {
     if (_taskSize < _RELAYS_MAX_TASK_SIZE) {
@@ -454,6 +503,7 @@ int Relays::addTaskTime( uint16_t relays, bool on, uint8_t month, uint8_t day_of
     }
     return -1;
 }
+#endif Relays_Basis_TaskTime
 
 int Relays::addTaskTemperature( uint16_t relays, bool on, uint8_t operatortype, int value)
 {
@@ -679,49 +729,36 @@ void Relays::trigger()
     }
 }
 
-uint8_t Relays::putXBeeData(ByteBuffer *buffer)
+void Relays::putXBeeData(ByteBuffer *buffer)
 {
-    if (putXBeeTime(buffer)) {
-        if (putXBeeStatus(buffer)) {
-            if (putXBeePower(buffer)) {
-                return 1;
-            }
-        }
-    }
-    return 0;
+    putXBeeTime(buffer);
+    putXBeeStatus(buffer);
+#ifdef Relays_power
+    putXBeePower(buffer);
+#endif Relays_power
 }
 
-uint8_t Relays::putXBeeTime(ByteBuffer *buffer)
+void Relays::putXBeeTime(ByteBuffer *buffer)
 {
     if (buffer->getFreeSize() >= 5) {
-        if(!buffer->put(XBEE_TIME_HEADER)) {
-            return 0;
-        }
-        return buffer->putTime(_lastTime);
+        buffer->put(XBEE_TIME_HEADER);
+        buffer->putTime(_lastTime);
     }
-    return 0;
 }
 
-uint8_t Relays::putXBeeStatus(ByteBuffer *buffer)
+void Relays::putXBeeStatus(ByteBuffer *buffer)
 {
     if (buffer->getFreeSize() >= (2 + _statusSize + 1)) {
-        if(!buffer->put(XBEE_RELAY_HEADER)){
-            return 0;
-        }
-        if (!buffer->put(_statusSize)) {
-            return 0;
-        }
+        buffer->put(XBEE_RELAY_HEADER);
+        buffer->put(_statusSize);
         for( uint8_t i = 0 ; i < _statusSize ; i++ ) {
-            if(!_status[i].putXBeeStatus(buffer)) {
-                return 0;
-            }
+            _status[i].putXBeeStatus(buffer);
         }
-        return 1;
     }
-    return 0;
 }
 
-uint8_t Relays::putXBeePower(ByteBuffer *buffer)
+#ifdef Relays_power
+void Relays::putXBeePower(ByteBuffer *buffer)
 {
     if (buffer->getFreeSize() >= (2 + (_statusSize + 1) * 2)) {
         uint8_t count = 0;
@@ -730,26 +767,18 @@ uint8_t Relays::putXBeePower(ByteBuffer *buffer)
                 count++;
             }
         }
-        if (count == 0) {
-            return 1;
-        }
-        if(!buffer->put(XBEE_POWER_HEADER)){
-            return 0;
-        }
-        if (!buffer->put(count)) {
-            return 0;
-        }
-        for( uint8_t i = 0 ; i < _statusSize ; i++ ) {
-            if(_status[i].isPower()) {
-                if(!_status[i].putXBeePower(buffer)) {
-                    return 0;
+        if (count > 0) {
+            buffer->put(XBEE_POWER_HEADER);
+            buffer->put(count);
+            for( uint8_t i = 0 ; i < _statusSize ; i++ ) {
+                if(_status[i].isPower()) {
+                    _status[i].putXBeePower(buffer);
                 }
             }
         }
-        return 1;
     }
-    return 0;
 }
+#endif Relays_power
 
 void Relays::relaysOn() {
     for( uint8_t i = 0 ; i < _statusSize ; i++ )
@@ -764,6 +793,9 @@ void Relays::relayOn(uint8_t relayPin) {
 #ifdef Relays_save
     saveStatus();
 #endif
+#ifdef Relays_at24
+    saveStatusAt24();
+#endif
 }
 
 void Relays::relayOn(int relayID) {
@@ -772,6 +804,9 @@ void Relays::relayOn(int relayID) {
     }
 #ifdef Relays_save
     saveStatus();
+#endif
+#ifdef Relays_at24
+    saveStatusAt24();
 #endif
 }
 
@@ -788,6 +823,9 @@ void Relays::relayOff(uint8_t relayPin) {
 #ifdef Relays_save
     saveStatus();
 #endif
+#ifdef Relays_at24
+    saveStatusAt24();
+#endif
 }
 
 void Relays::relayOff(int relayID) {
@@ -796,6 +834,9 @@ void Relays::relayOff(int relayID) {
     }
 #ifdef Relays_save
     saveStatus();
+#endif
+#ifdef Relays_at24
+    saveStatusAt24();
 #endif
 }
 
@@ -879,6 +920,23 @@ void Relays::saveStatus() {
     }
     _save.lasttime = now();
     RTC.setData(&_save);
+}
+#endif
+
+#ifdef Relays_at24
+void Relays::saveStatusAt24() {
+    _save.value = 0;
+    at24.setDataStatus(true);
+    for( uint8_t i = 0 ; i < min(_statusSize,15) ; i++ ) {
+        if (_status[i].isOn()) {
+            _save.value |= (1 << i) ;
+        }
+    }
+    _save.lasttime = now();
+    at24.setData(&_save);
+    if (at24.getDataStatus()) {
+        at24.getData(&_save);
+    }
 }
 #endif
 

@@ -22,6 +22,26 @@ void RelayTask::setup()
     bitWrite(_status,RELAYTASK_STATUS_SETUP_BIT,true);
 }
 
+#ifdef Relays_Basis_TaskTime
+void RelayTask::setTime(uint8_t hour, uint8_t minute)
+{
+#ifdef RelayTask_debug_setTime
+    Serial.print("RT:sT h=");
+    Serial.print(hour);
+    Serial.print(", mi=");
+    Serial.print(minute);
+    Serial.print(", _d=");
+    Serial.print(_data);
+#endif
+    setTask(RELAYTASK_TASK_TIME);
+    _data = timeToData(0,0,0,hour,minute);
+#ifdef RelayTask_debug_setTime
+    Serial.print(", _d=");
+    Serial.print(_data);
+    Serial.println();
+#endif
+}
+#else Relays_Basis_TaskTime
 void RelayTask::setTime(uint8_t month, uint8_t day_of_month, uint8_t day_of_week, uint8_t hour, uint8_t minute)
 {
 #ifdef RelayTask_debug_setTime
@@ -46,6 +66,7 @@ void RelayTask::setTime(uint8_t month, uint8_t day_of_month, uint8_t day_of_week
     Serial.println();
 #endif
 }
+#endif Relays_Basis_TaskTime
 
 void RelayTask::setTemperature(uint8_t operatortype, int value)
 {
@@ -115,10 +136,15 @@ bool RelayTask::isOn()
 
 bool RelayTask::isTimeoutTask()
 {
+    /*
     if (getTask() == RELAYTASK_TASK_TEMPERATURE ||
         getTask() == RELAYTASK_TASK_HUMIDITY ||
         getTask() == RELAYTASK_TASK_LIGHT ||
         getTask() == RELAYTASK_TASK_TRIGGER )
+        return true;
+    */
+    
+    if (getTask() & (RELAYTASK_TASK_TEMPERATURE|RELAYTASK_TASK_HUMIDITY|RELAYTASK_TASK_LIGHT|RELAYTASK_TASK_TRIGGER))
         return true;
     return false;
 }
@@ -149,12 +175,14 @@ uint16_t RelayTask::getTimerDelay()
 uint32_t RelayTask::timeToData(uint8_t month, uint8_t day_of_month, uint8_t day_of_week, uint8_t hour, uint8_t minute)
 {
     uint32_t data = 0x00000000;
+#ifndef Relays_Basis_TaskTime
     data += month & 0x000F;             // only 4 bits
     data = data << 6;
     data += day_of_month & 0x003F;      // only 6 bits
     data = data << 4;
     data += day_of_week & 0x000F;       // only 4 bits
     data = data << 5;
+#endif Relays_Basis_TaskTime
     data += hour & 0x001F;              // only 5 bits
     data = data << 6;
     data += minute & 0x003F;            // only 6 bits
@@ -420,6 +448,7 @@ bool RelayTask::checkTime(uint8_t month, uint8_t day_of_month, uint8_t day_of_we
             }
             break;
     }
+#ifdef RelayTask_day_of_week
     // DAY_OF_WEEK
     switch ((_data & RELAYTASK_DATA_TIME_DAY_OF_WEEK)>>11) {
         case RELAYTASK_TIME_WEAKDAY_ALL:
@@ -435,6 +464,8 @@ bool RelayTask::checkTime(uint8_t month, uint8_t day_of_month, uint8_t day_of_we
             }
             break;
     }
+#endif RelayTask_day_of_week
+#ifdef RelayTask_day_of_month
     // DAY_OF_MONTH
     switch ((_data & RELAYTASK_DATA_TIME_DAY_OF_MONTH)>>15) {
         case RELAYTASK_TIME_MONTHDAY_ALL:
@@ -450,6 +481,8 @@ bool RelayTask::checkTime(uint8_t month, uint8_t day_of_month, uint8_t day_of_we
             }
             break;
     }
+#endif RelayTask_day_of_month
+#ifdef RelayTask_month
     // MONTH
     switch ((_data & RELAYTASK_DATA_TIME_MONTH)>>21) {
         case RELAYTASK_TIME_MONTH_ALL:
@@ -465,6 +498,7 @@ bool RelayTask::checkTime(uint8_t month, uint8_t day_of_month, uint8_t day_of_we
             }
             break;
     }
+#endif RelayTask_month
 #ifdef RelayTask_debug_checkTime
     Serial.println();
 #endif

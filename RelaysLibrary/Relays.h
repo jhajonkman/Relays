@@ -15,6 +15,7 @@
 
 #define Relays_power
 #define Relays_save
+//#define Relays_at24
 
 #define Relays_trigger
 //#define Relays_Timer
@@ -33,12 +34,6 @@
     #include "WProgram.h"
 #endif
 
-#include <RelayStatus.h>
-#include <RelayTask.h>
-#include <JRTC.h>
-#include <Time.h>
-#include <ByteBuffer.h>
-
 #ifdef RelayTask_debug
 #define _RELAYS_MAX_TASK_SIZE       8
 #else
@@ -50,6 +45,15 @@
 #else
 #define _RELAYS_MAX_STATUS_SIZE     12
 #endif
+
+#include <RelayStatus.h>
+#include <RelayTask.h>
+#ifdef Relays_at24
+#include <AT24.h>
+#endif Relays_at24
+#include <JRTC.h>
+#include <Time.h>
+#include <ByteBuffer.h>
 
 #ifdef Relay_debug
 #define RELAYS_LOOP_CHECK           5000
@@ -90,9 +94,11 @@ public:
 #endif
     
     int addRelay( uint8_t relayPin, int16_t powerPin, bool defaultOn, uint16_t defaultMode);
-
+#ifdef Relays_Basis_TaskTime
+    int addTaskTime( uint16_t relays, bool on, uint8_t hour, uint8_t minute);
+#else
     int addTaskTime( uint16_t relays, bool on, uint8_t month, uint8_t day_of_month, uint8_t day_of_week, uint8_t hour, uint8_t minute);
-    
+#endif Relays_Basis_TaskTime
     int addTaskTemperature( uint16_t relays, bool on, uint8_t operatortype, int value);
     
     int addTaskHumidity( uint16_t relays, bool on, uint8_t operatortype, int value);
@@ -155,13 +161,13 @@ public:
     
     void trigger();
 
-    uint8_t putXBeeData(ByteBuffer *buffer);
+    void putXBeeData(ByteBuffer *buffer);
     
-    uint8_t putXBeeTime(ByteBuffer *buffer);
+    void putXBeeTime(ByteBuffer *buffer);
     
-    uint8_t putXBeeStatus(ByteBuffer *buffer);
+    void putXBeeStatus(ByteBuffer *buffer);
     
-    uint8_t putXBeePower(ByteBuffer *buffer);
+    void putXBeePower(ByteBuffer *buffer);
     
 
 private:
@@ -171,7 +177,7 @@ private:
     uint16_t        _statusID       = 0; //
     uint8_t         _taskSize       = 0;
     uint16_t        _taskID         = 0;
-    uint8_t         _looper         = 1;
+    uint16_t        _looper         = 1;
     bool            _setup          = false;
     uint8_t         _maxRelay       = _RELAYS_MAX;
     unsigned long   _last_run       = 0;
@@ -182,6 +188,10 @@ private:
 #ifdef Relays_save
     jrtcElements_t  _save;
 #endif
+#ifdef Relays_at24
+    AT24            at24;
+    at24Elements_t  _save;
+#endif Relays_at24
     
 #ifdef _RELAYS_digitalReadOutputPin
     int             digitalReadOutputPin(uint8_t pin);
@@ -193,7 +203,10 @@ private:
     uint8_t         getPowerStatusIndex(uint8_t powerPin);
 #ifdef Relays_save
     void            saveStatus();
-#endif
+#endif Relays_save
+#ifdef Relays_at24
+    void            saveStatusAt24();
+#endif Relays_at24
 #ifdef Relays_print
     String          loopStringStatus();
 #endif
