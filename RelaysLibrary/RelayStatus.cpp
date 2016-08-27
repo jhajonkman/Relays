@@ -113,15 +113,47 @@ void RelayStatus::loop()
 #endif
 }
 
-void RelayStatus::setMode(byte mode) {
-    _mode = mode;
+#ifdef Relays_at24
+void RelayStatus::restore(at24Element_t *relay)
+{
+#ifdef RelayStatus_debug
+    Serial.print("RelayStatus::restore S=");
+    Serial.print(relay->status,HEX);
+    Serial.print(",M=");
+    Serial.print(relay->mode,HEX);
+    Serial.print(",D=");
+    Serial.println(relay->defaultmode,HEX);
+#endif
+    _defaultMode = relay->defaultmode;
+    if( relay->status & RELAYSTATUS_STATUS_ON) {
+        relayOn(RELAYSTATUS_MODE_RESTORE);
+    }
+    _status = relay->status;
+    _mode = relay->mode;
 }
 
-byte RelayStatus::getMode() {
+void RelayStatus::backup(at24Element_t *relay)
+{
+    relay->status = _status;
+    relay->mode = _mode;
+    relay->defaultmode = _defaultMode;
+#ifdef RelayStatus_debug
+    Serial.print("RelayStatus::backup S=");
+    Serial.print(relay->status,HEX);
+    Serial.print(",M=");
+    Serial.print(relay->mode,HEX);
+    Serial.print(",D=");
+    Serial.println(relay->defaultmode,HEX);
+#endif
+}
+#endif Relays_at24
+
+
+uint8_t RelayStatus::getMode() {
     return _mode;
 }
 
-byte RelayStatus::getDefaultMode() {
+uint8_t RelayStatus::getDefaultMode() {
     return _defaultMode;
 }
 
@@ -156,7 +188,13 @@ void RelayStatus::relayOn(uint16_t mode)
 #endif
         return;
     }
-    if( (mode & _mode) == mode ) {
+    if ( isLocked() || isDisabled () ) {
+        return;
+    }
+    if (!isSensorsOn() && (mode & RELAYSTATUS_MODE_SENSORS)) {
+        return;
+    }
+    if( (mode & _mode) == mode || (mode & RELAYSTATUS_MODE_MANUAL)) {
 #ifdef RelayStatus_debug_onoff
         Serial.print("RelayStatus::relayOn mode checked, mode=");
         Serial.print(mode,BIN);
@@ -226,7 +264,13 @@ void RelayStatus::relayOff(uint16_t mode)
 #endif
         return;
     }
-    if( (mode & _mode) == mode ) {
+    if ( isLocked() || isDisabled () ) {
+        return;
+    }
+    if (!isSensorsOn() && (mode & RELAYSTATUS_MODE_SENSORS)) {
+        return;
+    }
+    if( (mode & _mode) == mode || (mode & RELAYSTATUS_MODE_MANUAL)) {
 #ifdef RelayStatus_debug_onoff
         Serial.print("RelayStatus::relayOff mode checked, mode=");
         Serial.print(mode,BIN);
@@ -283,6 +327,11 @@ void RelayStatus::relayOff(uint16_t mode)
     }
 }
 
+void RelayStatus::relayLock(bool locked)
+{
+    bitWrite(_status,RELAYSTATUS_STATUS_LOCKED_BIT,locked);
+}
+
 bool RelayStatus::isSetup()
 {
     return bitRead(_status,RELAYSTATUS_STATUS_SETUP_BIT);
@@ -336,8 +385,21 @@ bool RelayStatus::isTimer() {
     return bitRead(_timer,RELAYSTATUS_TIMER_BIT);
 }
 
+bool RelayStatus::isLocked() {
+    return bitRead(_status,RELAYSTATUS_STATUS_LOCKED_BIT);
+}
+
 bool RelayStatus::isPower() {
     return bitRead(_status,RELAYSTATUS_STATUS_POWER_BIT);
+}
+
+bool RelayStatus::isDisabled() {
+    return bitRead(_status,RELAYSTATUS_STATUS_DISABLED_BIT);
+}
+
+bool RelayStatus::isSensorsOn() {
+    // Negative switch
+    return !bitRead(_status,RELAYSTATUS_STATUS_NOSENSORS_BIT);
 }
 
 void RelayStatus::setTimer(uint8_t delayType, uint16_t delay)
@@ -391,6 +453,12 @@ void RelayStatus::setPowerOffset(int8_t offset)
     _powerOffset = offset;
 }
 #endif
+
+void RelayStatus::setSensorsOn(bool on)
+{
+    // Negative switch
+    bitWrite(_status,RELAYSTATUS_STATUS_NOSENSORS_BIT,!on);
+}
 
 uint8_t RelayStatus::getTimerType()
 {

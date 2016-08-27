@@ -18,6 +18,12 @@
 #include <RelayTask.h>
 
 #define RelayStatus_power
+//#define Relays_save
+#define Relays_at24
+
+#ifdef Relays_at24
+#include <AT24.h>
+#endif Relays_at24
 
 //#define RelayStatus_power_turning
 
@@ -45,13 +51,14 @@
 
 #define _RELAYSTATUS_POWER_CYCLES       8
 
-#define RELAYSTATUS_STATUS_SETUP        0x01 // 1 bit  .......1
-#define RELAYSTATUS_STATUS_ON           0x02 // 1 bit  ......1.
-#define RELAYSTATUS_STATUS_DEFAULT_ ON  0x04 // 1 bit  .....1..
-#define RELAYSTATUS_STATUS_POWER_ON     0x08 // 1 bit  ....1...
-#define RELAYSTATUS_STATUS_POWER_TYPE   0x30 // 2 bit  ..11....
-#define RELAYSTATUS_STATUS_EXTRA        0x40 // 1 bit  .1......
-#define RELAYSTATUS_STATUS_DISABLED     0x80 // 1 bit  1.......
+#define RELAYSTATUS_STATUS_SETUP        0x0001 // 1 bit  ........ .......1
+#define RELAYSTATUS_STATUS_ON           0x0002 // 1 bit  ..............1.
+#define RELAYSTATUS_STATUS_DEFAULT_ ON  0x0004 // 1 bit  ........ .....1..
+#define RELAYSTATUS_STATUS_POWER_ON     0x0008 // 1 bit  ........ ....1...
+#define RELAYSTATUS_STATUS_POWER_TYPE   0x0030 // 2 bit  ........ ..11....
+#define RELAYSTATUS_STATUS_LOCKED       0x0040 // 1 bit  ........ .1......
+#define RELAYSTATUS_STATUS_DISABLED     0x0080 // 1 bit  ........ 1.......
+#define RELAYSTATUS_STATUS_NOSENSORS    0x0100 // 1 bit  .......1 ........
 
 
 #define RELAYSTATUS_STATUS_SETUP_BIT        0
@@ -60,8 +67,9 @@
 #define RELAYSTATUS_STATUS_POWER_BIT        3
 #define RELAYSTATUS_STATUS_A5_BIT           4
 #define RELAYSTATUS_STATUS_A20_BIT          5
-#define RELAYSTATUS_STATUS_EXTRA_BIT        6
+#define RELAYSTATUS_STATUS_LOCKED_BIT       6
 #define RELAYSTATUS_STATUS_DISABLED_BIT     7
+#define RELAYSTATUS_STATUS_NOSENSORS_BIT    8
 
 
 #define RELAYSTATUS_MODE_NONE           0x00    // ........
@@ -73,6 +81,7 @@
 #define RELAYSTATUS_MODE_EXTRA          0x20    // ..1.....
 #define RELAYSTATUS_MODE_TIMER          0x40    // .1......
 #define RELAYSTATUS_MODE_TRIGGER        0x80    // 1.......
+#define RELAYSTATUS_MODE_SENSORS        0x3C    // ..1111..
 #define RELAYSTATUS_MODE_ALL            0xFF    // 11111111
 #define RELAYSTATUS_MODE_DEFAULT        RELAYSTATUS_MODE_ALL ^ ( RELAYSTATUS_MODE_MANUAL |RELAYSTATUS_MODE_EXTRA )
 #define RELAYSTATUS_MODE_RESTORE        RELAYSTATUS_MODE_ALL ^ ( RELAYSTATUS_MODE_EXTRA )
@@ -111,13 +120,15 @@ public:
     
     void loop();
 
-    void setMode(byte mode);
-
+#ifdef Relays_at24
+    void restore(at24Element_t *relay);
+    
+    void backup(at24Element_t *relay);
+#endif
+    
     uint8_t getMode();
     
     uint8_t getDefaultMode();
-    
-    void setRelayOn(bool on);
     
     uint8_t relayPin();
     
@@ -133,6 +144,8 @@ public:
 
     void relayOff(uint16_t mode);
     
+    void relayLock(bool locked);
+    
     bool isSetup();
     
     bool isOn();
@@ -140,6 +153,12 @@ public:
     bool isDefaultOn();
     
     bool isTimer();
+
+    bool isLocked();
+
+    bool isDisabled();
+    
+    bool isSensorsOn();
 
     bool isPower();
 
@@ -149,7 +168,10 @@ public:
     uint16_t getPower();
     
     void setPowerOffset(int8_t offset);
+    
 #endif
+    
+    void setSensorsOn(bool on);
     
     uint8_t getTimerType();
     
@@ -168,7 +190,7 @@ public:
 #endif
     
 private:
-    uint8_t     _status         = 0x00;
+    uint16_t    _status         = 0;
     uint8_t     _relayPin       = 0;
     uint8_t     _powerPin       = 0;
     uint8_t     _mode           = RELAYSTATUS_MODE_DEFAULT;

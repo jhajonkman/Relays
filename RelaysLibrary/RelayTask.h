@@ -20,6 +20,10 @@
 #define RelayTask_day_of_week
 #endif Relays_Basis_TaskTime
 
+//#define RelayTask_Humidity
+//#define RelayTask_Locker
+#define RelayTask_Sensors
+
 //#define RelayTask_debug
 //#define RelayTask_debug_time
 //#define RelayTask_debug_setTime
@@ -57,25 +61,35 @@
 
 #define RELAYTASK_STATUS_SETUP     0x01 // 1 bit  .......1
 #define RELAYTASK_STATUS_ON        0x02 // 1 bit  ......1.
+#define RELAYTASK_STATUS_RELAY_ON  0x04 // 1 bit  .....1..
 #define RELAYTASK_STATUS_TASK      0xF0 // 4 bits 1111....
 
 
-#define RELAYTASK_STATUS_SETUP_BIT 0
-#define RELAYTASK_STATUS_ON_BIT    1
+#define RELAYTASK_STATUS_SETUP_BIT          0
+#define RELAYTASK_STATUS_ON_BIT             1
+#define RELAYTASK_STATUS_RELAY_ON_BIT       2
 
-#define RELAYTASK_TASK_NONE        0
-#define RELAYTASK_TASK_TIME        1
-#define RELAYTASK_TASK_TEMPERATURE 2
-#define RELAYTASK_TASK_HUMIDITY    3
-#define RELAYTASK_TASK_LIGHT       4
-#define RELAYTASK_TASK_EXTRA       5
-#define RELAYTASK_TASK_TIMER       6
-#define RELAYTASK_TASK_TRIGGER     7
+#define RELAYTASK_TASK_NONE                 0
+#define RELAYTASK_TASK_TIME                 1
+#define RELAYTASK_TASK_TEMPERATURE          2
+#define RELAYTASK_TASK_HUMIDITY             3
+#define RELAYTASK_TASK_LIGHT                4
+#define RELAYTASK_TASK_EXTRA                5
+#define RELAYTASK_TASK_TIMER                6
+#define RELAYTASK_TASK_TRIGGER              7
+#define RELAYTASK_TASK_LOCKER               8
+#define RELAYTASK_TASK_UNLOCKER             9
+#define RELAYTASK_TASK_SENSORS              10
 
 #define RELAYTASK_OPERATOR_NONE             0
 #define RELAYTASK_OPERATOR_EQUAL_TO         1
 #define RELAYTASK_OPERATOR_GREATER_THAN     2
 #define RELAYTASK_OPERATOR_LESS_THAN        3
+
+#define RELAYTASK_OPERATOR_RELAY_DISABLED   0
+#define RELAYTASK_OPERATOR_RELAY_ENABLED    1
+#define RELAYTASK_OPERATOR_RELAY_ON         2
+#define RELAYTASK_OPERATOR_RELAY_OFF        3
 
 #define RELAYTASK_TIME_MINUTE_ALL           60
 #define RELAYTASK_TIME_MINUTE_5             61
@@ -143,11 +157,13 @@ public:
     void setTime(uint8_t month, uint8_t day_of_month, uint8_t day_of_week, uint8_t hour, uint8_t minute);
 #endif Relays_Basis_TaskTime
     
-    void setTemperature(uint8_t operatortype, int value);
+    void setTemperature(uint8_t operatortype, int value, uint8_t mode);
     
-    void setHumidity(uint8_t operatortype, int value);
+#ifdef RelayTask_Humidity
+    void setHumidity(uint8_t operatortype, int value, uint8_t mode);
+#endif RelayTask_Humidity
 
-    void setLight(uint8_t operatortype, int value);
+    void setLight(uint8_t operatortype, int value, uint8_t mode);
 
     void setTrigger(uint8_t delayType, uint16_t delay);
 
@@ -156,6 +172,8 @@ public:
     bool setTimeout(uint8_t delayType, uint16_t delay);
 
     void setOn(bool on);
+    
+    void setRelayOn(bool on);
 
     bool isOn();
 
@@ -181,6 +199,8 @@ public:
     bool checkTime(time_t time);
     
     bool checkTime(uint8_t month, uint8_t day_of_month, uint8_t day_of_week, uint8_t hour, uint8_t minute);
+    
+    void setTask(uint8_t task);    
 
 #ifdef RelayTask_debug
     
@@ -197,11 +217,9 @@ private:
 
     static uint32_t timeToData(uint8_t month, uint8_t day_of_month, uint8_t day_of_week, uint8_t hour, uint8_t minute);
     
-    static uint32_t operatorToData(uint8_t operatortype, int value);
+    static uint32_t operatorToData(uint8_t operatortype, int value, uint8_t mode);
     
     static uint32_t timeoutToData(uint8_t delayType, uint16_t delay);
-    
-    void setTask(uint8_t task);
     
     // uint16_t yearday(time_t time);
     

@@ -20,6 +20,7 @@
 void Relays::setup()
 {
     _setup = true;
+    _statusSize = 0;
     if( timeStatus() == timeSet ) {
         _lastTime = now();
     }
@@ -48,11 +49,13 @@ void Relays::loop()
 #ifdef Relays_debug
         Serial.println("Relays::loop next run.");
 #endif
-        loopTask();
-        loopStatus();
+        if (_looper > 5) {
+            loopTask();
+            loopStatus();
 #ifdef Relays_power
-        loopPower();
+            loopPower();
 #endif
+        }
         if (_looper%15==0 && _setup) {
 #ifdef Relays_print
             Serial.print(loopStringStatus());
@@ -75,46 +78,28 @@ void Relays::loopTask()
         if (_task[i].isSetup()) {
             uint8_t task = _task[i].getTask();
             uint16_t relay = _task[i].getRelay();
-            if( task == RELAYTASK_TASK_TIME  ) {
-                // Check time task
+#ifdef RelayTask_Sensors
+            if( task == RELAYTASK_TASK_SENSORS) {
                 for (uint8_t j = 0 ; j < _statusSize; j++) {
                     // Check relay task with RelayStatus
                     if ( (relay & 1<<j ) != (1<<j) ) {
                         continue;
                     }
-                    // Check defaultMode of the RelayStatus
-                    uint8_t defaultMode = _status[j].getDefaultMode();
-#ifdef Relays_time_debug
-                    Serial.print("Relays::loopTask Time defaultMode=");
-                    Serial.print(defaultMode,BIN);
-                    Serial.print(", RELAYSTATUS_MODE_TIME=");
-                    Serial.println(RELAYSTATUS_MODE_TIME,BIN);
-#endif
-                    if ( (defaultMode & RELAYSTATUS_MODE_TIME) == RELAYSTATUS_MODE_TIME ) {
-                        defaultMode = _status[j].getDefaultMode();
-                        bool check = _task[i].checkTime(now());
-#ifdef RelayTask_debug
-                        Serial.print("Relays::loopTask Time, relay=");
-                        Serial.print(_status[j].relayPin());
-                        if (!check) {
-                            Serial.println(" checked=false");
-                        }
-#endif
-                        if (check && _task[i].isOn()) {
-#ifdef RelayTask_debug
-                            Serial.println(" relayON");
-#endif
-                            _status[j].relayOn(RELAYSTATUS_MODE_TIME);
-                        }
-                        if (check && !_task[i].isOn()) {
-#ifdef RelayTask_debug
-                            Serial.println(" relayOFF");
-#endif
-                            _status[j].relayOff(RELAYSTATUS_MODE_TIME);
+                    if (_task[i].checkTime(now())) {
+                        if (_task[i].isOn()) {
+                            _status[j].setSensorsOn(true);
+                        } else {
+                            if (_status[j].isDefaultOn()) {
+                                _status[j].relayOn(_status[j].getMode());
+                            } else {
+                                _status[j].relayOff(_status[j].getMode());
+                            }
+                            _status[j].setSensorsOn(false);
                         }
                     }
                 }
             }
+#endif RelayTask_Sensors
             if( _temperature != _RELAYS_TEMPERATURE_NOSET && task == RELAYTASK_TASK_TEMPERATURE  ) {
                 // Check temperature
 #ifdef RelayTask_debug
@@ -144,20 +129,20 @@ void Relays::loopTask()
                             Serial.println(" checked=false");
                         }
 #endif
-                        if (check && _task[i].isOn()) {
+                        if (check) {
+                            if (_task[i].isOn()) {
 #ifdef RelayTask_debug
-                            Serial.println(" relayON");
+                                Serial.println(" relayON");
 #endif
-                            _status[j].relayOn(RELAYSTATUS_MODE_TEMPERATURE);
-                            if (_task[i].isTimeoutSet()) {
-                                _status[j].setTimer(_task[i].getTimerType(),_task[i].getTimerDelay());
+                                _status[j].relayOn(RELAYSTATUS_MODE_TEMPERATURE);
                             }
-                        }
-                        if (check && !_task[i].isOn()) {
+                            if (!_task[i].isOn()) {
 #ifdef RelayTask_debug
-                            Serial.println(" relayOFF");
+                                Serial.println(" relayOFF");
 #endif
-                            _status[j].relayOff(RELAYSTATUS_MODE_TEMPERATURE);
+                                _status[j].relayOff(RELAYSTATUS_MODE_TEMPERATURE);
+                                
+                            }
                             if (_task[i].isTimeoutSet()) {
                                 _status[j].setTimer(_task[i].getTimerType(),_task[i].getTimerDelay());
                             }
@@ -165,6 +150,7 @@ void Relays::loopTask()
                     }
                 }
             }
+#ifdef RelayTask_Humidity
             if (_humidity != _RELAYS_HUMIDITY_NOSET && task == RELAYTASK_TASK_HUMIDITY) {
                 // Check humidity
 #ifdef RelayTask_debug
@@ -194,20 +180,19 @@ void Relays::loopTask()
                         }
                         Serial.print(_status[j].relayPin());
 #endif
-                        if (check && _task[i].isOn()) {
+                        if (check) {
+                            if (_task[i].isOn()) {
 #ifdef RelayTask_debug
-                            Serial.println(" relayON");
+                                Serial.println(" relayON");
 #endif
-                            _status[j].relayOn(RELAYSTATUS_MODE_HUMIDITY);
-                            if (_task[i].isTimeoutSet()) {
-                                _status[j].setTimer(_task[i].getTimerType(),_task[i].getTimerDelay());
+                                _status[j].relayOn(RELAYSTATUS_MODE_HUMIDITY);
                             }
-                        }
-                        if (check && !_task[i].isOn()) {
+                            if (!_task[i].isOn()) {
 #ifdef RelayTask_debug
-                            Serial.println(" relayOFF");
+                                Serial.println(" relayOFF");
 #endif
-                            _status[j].relayOff(RELAYSTATUS_MODE_HUMIDITY);
+                                _status[j].relayOff(RELAYSTATUS_MODE_HUMIDITY);
+                            }
                             if (_task[i].isTimeoutSet()) {
                                 _status[j].setTimer(_task[i].getTimerType(),_task[i].getTimerDelay());
                             }
@@ -215,6 +200,7 @@ void Relays::loopTask()
                     }
                 }
             }
+#endif RelayTask_Humidity
             if (_light != _RELAYS_LIGHT_NOSET && task == RELAYTASK_TASK_LIGHT) {
                 // Check light
 #ifdef RelayStatus_debug
@@ -244,20 +230,19 @@ void Relays::loopTask()
                             Serial.println(" checked=false");
                         }
 #endif
-                        if (check && _task[i].isOn()) {
+                        if (check) {
+                            if (_task[i].isOn()) {
 #ifdef RelayTask_debug
-                            Serial.println(" relayON");
+                                Serial.println(" relayON");
 #endif
-                            _status[j].relayOn(RELAYSTATUS_MODE_LIGHT);
-                            if (_task[i].isTimeoutSet()) {
-                                _status[j].setTimer(_task[i].getTimerType(),_task[i].getTimerDelay());
+                                _status[j].relayOn(RELAYSTATUS_MODE_LIGHT);
                             }
-                        }
-                        if (check && !_task[i].isOn()) {
+                            if (!_task[i].isOn()) {
 #ifdef RelayTask_debug
-                            Serial.println(" relayOFF");
+                                Serial.println(" relayOFF");
 #endif
-                            _status[j].relayOff(RELAYSTATUS_MODE_LIGHT);
+                                _status[j].relayOff(RELAYSTATUS_MODE_LIGHT);
+                            }
                             if (_task[i].isTimeoutSet()) {
                                 _status[j].setTimer(_task[i].getTimerType(),_task[i].getTimerDelay());
                             }
@@ -265,8 +250,68 @@ void Relays::loopTask()
                     }
                 }
             }
+            if( task == RELAYTASK_TASK_TIME  ) {
+                // Check time task
+                for (uint8_t j = 0 ; j < _statusSize; j++) {
+                    // Check relay task with RelayStatus
+                    if ( (relay & 1<<j ) != (1<<j) ) {
+                        continue;
+                    }
+                    // Check defaultMode of the RelayStatus
+                    uint8_t defaultMode = _status[j].getDefaultMode();
+#ifdef Relays_time_debug
+                    Serial.print("Relays::loopTask Time defaultMode=");
+                    Serial.print(defaultMode,BIN);
+                    Serial.print(", RELAYSTATUS_MODE_TIME=");
+                    Serial.println(RELAYSTATUS_MODE_TIME,BIN);
+#endif
+                    if ( (defaultMode & RELAYSTATUS_MODE_TIME) == RELAYSTATUS_MODE_TIME) {
+                        //defaultMode = _status[j].getDefaultMode();
+                        bool check = _task[i].checkTime(now());
+#ifdef RelayTask_debug
+                        Serial.print("Relays::loopTask Time, relay=");
+                        Serial.print(_status[j].relayPin());
+                        if (!check) {
+                            Serial.println(" checked=false");
+                        }
+#endif
+                        if (check) {
+                            if (_task[i].isOn()) {
+#ifdef RelayTask_debug
+                                Serial.println(" relayON");
+#endif
+                                _status[j].relayOn(RELAYSTATUS_MODE_TIME);
+                            }
+                            if (!_task[i].isOn()) {
+#ifdef RelayTask_debug
+                                Serial.println(" relayOFF");
+#endif
+                                _status[j].relayOff(RELAYSTATUS_MODE_TIME);
+                            }
+                        }
+                    }
+                }
+            }
+#ifdef RelayTask_Locker
+            if( task == RELAYTASK_TASK_LOCKER || task == RELAYTASK_TASK_UNLOCKER ) {
+                for (uint8_t j = 0 ; j < _statusSize; j++) {
+                    // Check relay task with RelayStatus
+                    if ( (relay & 1<<j ) != (1<<j) ) {
+                        continue;
+                    }
+                    bool check = _task[i].checkTime(now());
+                    if (check) {
+                        if (_task[i].isOn()) {
+                            _status[j].relayOn(RELAYSTATUS_MODE_DEFAULT);
+                        } else {
+                            _status[j].relayOff(RELAYSTATUS_MODE_DEFAULT);
+                        }
+                        _status[j].relayLock(task == RELAYTASK_TASK_LOCKER);
+                    }
+                }
+            }
+#endif RelayTask_Locker
         }
-        
     }
     
 #ifdef RelayTask_debug
@@ -427,7 +472,7 @@ int Relays::addRelay( uint8_t relayPin, int16_t powerPin, bool defaultOn, uint16
         RelayStatus status;
         status.setup(relayPin,powerPin,defaultMode,defaultOn);
 #ifdef Relays_save
-        if( _save.lasttime > 0 && _statusSize < 15) {
+        if( _save.lasttime > 0 && _statusSize < AT24_STATUS_SIZE) {
 #ifdef Relays_print
             Serial.print("value=");
             Serial.print(_save.value);
@@ -446,22 +491,8 @@ int Relays::addRelay( uint8_t relayPin, int16_t powerPin, bool defaultOn, uint16
         }
 #endif Relays_save
 #ifdef Relays_at24
-        if( _save.lasttime > 0 && _statusSize < 15) {
-#ifdef Relays_print
-            Serial.print("value=");
-            Serial.print(_save.value);
-#endif Relays_print
-            if (_save.value & (0x1 << _statusSize)) {
-#ifdef Relays_print
-                Serial.println(",on");
-#endif Relays_print
-                status.relayOn(RELAYSTATUS_MODE_RESTORE);
-            } else {
-#ifdef Relays_print
-                Serial.println(",off");
-#endif Relays_print
-                status.relayOff(RELAYSTATUS_MODE_RESTORE);
-            }
+        if( _save.lasttime > 0 && _statusSize < AT24_STATUS_SIZE) {
+            status.restore(&_save.relay[_statusSize]);
         }
 #endif Relays_at24
         _status[_statusSize] = status;
@@ -473,7 +504,31 @@ int Relays::addRelay( uint8_t relayPin, int16_t powerPin, bool defaultOn, uint16
     return _statusID++;
 }
 
+
+
 #ifdef Relays_Basis_TaskTime
+
+int Relays::addTaskTimeLock( uint16_t relays, bool on, uint8_t hour, uint8_t minute)
+{
+    int task_id = addTaskTime(relays, on, hour, minute);
+    _task[task_id].setTask(RELAYTASK_TASK_LOCKER);
+    return task_id;
+}
+
+int Relays::addTaskTimeUnlock( uint16_t relays, bool on, uint8_t hour, uint8_t minute)
+{
+    int task_id = addTaskTime(relays, on, hour, minute);
+    _task[task_id].setTask(RELAYTASK_TASK_UNLOCKER);
+    return task_id;
+}
+
+int Relays::addTaskTimeSensors( uint16_t relays, bool on, uint8_t hour, uint8_t minute)
+{
+    int task_id = addTaskTime(relays, on, hour, minute);
+    _task[task_id].setTask(RELAYTASK_TASK_SENSORS);
+    return task_id;
+}
+
 int Relays::addTaskTime( uint16_t relays, bool on, uint8_t hour, uint8_t minute)
 {
     if (_taskSize < _RELAYS_MAX_TASK_SIZE) {
@@ -507,12 +562,17 @@ int Relays::addTaskTime( uint16_t relays, bool on, uint8_t month, uint8_t day_of
 
 int Relays::addTaskTemperature( uint16_t relays, bool on, uint8_t operatortype, int value)
 {
+    addTaskTemperature(relays,on,operatortype,value,RELAYTASK_OPERATOR_RELAY_DISABLED);
+}
+
+int Relays::addTaskTemperature( uint16_t relays, bool on, uint8_t operatortype, int value, uint8_t mode)
+{
     if (_taskSize < _RELAYS_MAX_TASK_SIZE) {
         RelayTask task;
         task.setup();
         task.setOn(on);
         task.setRelay(relays);
-        task.setTemperature(operatortype,value);
+        task.setTemperature(operatortype,value, mode);
         _task[_taskSize] = task;
         _taskSize++;
         return _taskID++;
@@ -520,29 +580,41 @@ int Relays::addTaskTemperature( uint16_t relays, bool on, uint8_t operatortype, 
     return -1;
 }
 
+#ifdef RelayTask_Humidity
 int Relays::addTaskHumidity( uint16_t relays, bool on, uint8_t operatortype, int value)
+{
+    return addTaskHumidity(relays,on,operatortype,value,RELAYTASK_OPERATOR_RELAY_DISABLED);
+}
+
+int Relays::addTaskHumidity( uint16_t relays, bool on, uint8_t operatortype, int value, uint8_t mode)
 {
     if (_taskSize < _RELAYS_MAX_TASK_SIZE) {
         RelayTask task;
         task.setup();
         task.setOn(on);
         task.setRelay(relays);
-        task.setHumidity(operatortype,value);
+        task.setHumidity(operatortype,value, mode);
         _task[_taskSize] = task;
         _taskSize++;
         return _taskID++;
     }
     return -1;
 }
+#endif RelayTask_Humidity
 
 int Relays::addTaskLight( uint16_t relays, bool on, uint8_t operatortype, int value)
 {
+    return addTaskLight(relays,on,operatortype,value,RELAYTASK_OPERATOR_RELAY_DISABLED);
+}
+
+int Relays::addTaskLight( uint16_t relays, bool on, uint8_t operatortype, int value, uint8_t mode)
+{
     if (_taskSize < _RELAYS_MAX_TASK_SIZE) {
         RelayTask task;
         task.setup();
         task.setOn(on);
         task.setRelay(relays);
-        task.setLight(operatortype,value);
+        task.setLight(operatortype,value, mode);
         _task[_taskSize] = task;
         _taskSize++;
         return _taskID++;
@@ -786,21 +858,21 @@ void Relays::relaysOn() {
 }
 
 void Relays::relayOn(uint8_t relayPin) {
-    uint8_t index = getRelayStatusIndex(relayPin);
-    if (index <= _RELAYS_MAX_STATUS_SIZE && _status[index].isSetup()) {
-        _status[index].relayOn();
-    }
-#ifdef Relays_save
-    saveStatus();
-#endif
-#ifdef Relays_at24
-    saveStatusAt24();
-#endif
+    relayOn(relayPin,RELAYSTATUS_MODE_MANUAL);
+}
+
+void Relays::relayOn(uint8_t relayPin, uint8_t mode) {
+    int index = getRelayStatusIndex(relayPin);
+    relayOn(index, mode);
 }
 
 void Relays::relayOn(int relayID) {
+    relayOn(relayID,RELAYSTATUS_MODE_MANUAL);
+}
+
+void Relays::relayOn(int relayID, uint8_t mode) {
     if (relayID <= _RELAYS_MAX_STATUS_SIZE && _status[relayID].isSetup()) {
-        _status[relayID].relayOn(RELAYSTATUS_MODE_MANUAL);
+        _status[relayID].relayOn(mode);
     }
 #ifdef Relays_save
     saveStatus();
@@ -816,9 +888,21 @@ void Relays::relaysOff() {
 }
 
 void Relays::relayOff(uint8_t relayPin) {
-    uint8_t index = getRelayStatusIndex(relayPin);
-    if (index <= _RELAYS_MAX_STATUS_SIZE && _status[index].isSetup()) {
-        _status[index].relayOff();
+    relayOff(relayPin, RELAYSTATUS_MODE_MANUAL);
+}
+
+void Relays::relayOff(uint8_t relayPin, uint8_t mode) {
+    int index = getRelayStatusIndex(relayPin);
+    relayOff(index, mode);
+}
+
+void Relays::relayOff(int relayID) {
+    relayOff(relayID,RELAYSTATUS_MODE_MANUAL);
+}
+
+void Relays::relayOff(int relayID, uint8_t mode) {
+    if (relayID <= _RELAYS_MAX_STATUS_SIZE && _status[relayID].isSetup()) {
+        _status[relayID].relayOff(mode);
     }
 #ifdef Relays_save
     saveStatus();
@@ -828,13 +912,25 @@ void Relays::relayOff(uint8_t relayPin) {
 #endif
 }
 
-void Relays::relayOff(int relayID) {
-    if (relayID <= _RELAYS_MAX_STATUS_SIZE && _status[relayID].isSetup()) {
-        _status[relayID].relayOff(RELAYSTATUS_MODE_MANUAL);
+void Relays::relaysLock(bool locked) {
+    for( uint8_t i = 0 ; i < _statusSize ; i++ )
+        relayLock(_status[i].relayPin(),locked);
+}
+
+void Relays::relayLock(uint8_t relayPin, bool locked) {
+    uint8_t index = getRelayStatusIndex(relayPin);
+    if (index <= _RELAYS_MAX_STATUS_SIZE && _status[index].isSetup()) {
+        _status[index].relayLock(locked);
     }
-#ifdef Relays_save
-    saveStatus();
+#ifdef Relays_at24
+    saveStatusAt24();
 #endif
+}
+
+void Relays::relayLock(int relayID, bool locked) {
+    if (relayID <= _RELAYS_MAX_STATUS_SIZE && _status[relayID].isSetup()) {
+        _status[relayID].relayLock(locked);
+    }
 #ifdef Relays_at24
     saveStatusAt24();
 #endif
@@ -909,6 +1005,16 @@ uint8_t Relays::getPowerStatusIndex(uint8_t powerPin)
     return index;
 }
 
+void Relays::resetStatus()
+{
+#ifdef Relays_save
+    RTC.setDataStatus(false);
+#endif Relays_save
+#ifdef Relays_at24
+    at24.setDataStatus(false);
+#endif Relays_at24
+}
+
 #ifdef Relays_save
 void Relays::saveStatus() {
     _save.value = 0;
@@ -925,16 +1031,13 @@ void Relays::saveStatus() {
 
 #ifdef Relays_at24
 void Relays::saveStatusAt24() {
-    _save.value = 0;
     at24.setDataStatus(true);
-    for( uint8_t i = 0 ; i < min(_statusSize,15) ; i++ ) {
-        if (_status[i].isOn()) {
-            _save.value |= (1 << i) ;
-        }
+    for( uint8_t i = 0 ; i < min(_statusSize,AT24_STATUS_SIZE) ; i++ ) {
+        _status[i].backup(&_save.relay[i]);
     }
     _save.lasttime = now();
     at24.setData(&_save);
-    if (at24.getDataStatus()) {
+    if (at24.getDataStatus() && _looper > 15) {
         at24.getData(&_save);
     }
 }
@@ -942,24 +1045,28 @@ void Relays::saveStatusAt24() {
 
 #ifdef Relays_print
 String Relays::loopStringStatus() {
-    text = "Relays";
+    String text = "Relays";
     for( int i = 0 ; i < _statusSize ; i++ ) {
         if ( _status[i].isSetup() ) {
             text += ", R";
-            text.concat(i+1,HEX);
+            text += String(i+1,HEX);
             if( _status[i].isOn() ) {
                 text += "=ON";
             } else {
                 text += "=OFF";
             }
-            text += ", A=";
-            text += _status[i].getPower();
-            text += ", W=";
-            text += (float)(_status[i].getPower() * RELAYSTATUS_POWER_VOLTS)/1000);
+#ifdef Relays_power
+            if (_status[i].isPower()) {
+                text += ", A=";
+                text += _status[i].getPower();
+                text += ", W=";
+                text += (float)((_status[i].getPower() * RELAYSTATUS_POWER_VOLTS)/1000);
+            }
+#endif Relays_power
         }
     }
     text += "\n";
-    return text
+    return text;
 }
 #endif
 

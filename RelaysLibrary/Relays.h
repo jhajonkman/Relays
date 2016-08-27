@@ -14,8 +14,6 @@
 #define Relays_h
 
 #define Relays_power
-#define Relays_save
-//#define Relays_at24
 
 #define Relays_trigger
 //#define Relays_Timer
@@ -56,9 +54,9 @@
 #include <ByteBuffer.h>
 
 #ifdef Relay_debug
-#define RELAYS_LOOP_CHECK           5000
+#define RELAYS_LOOP_CHECK           2500
 #else
-#define RELAYS_LOOP_CHECK           1000
+#define RELAYS_LOOP_CHECK           500
 #endif
 
 #define RELAYS_OFF                  false
@@ -95,15 +93,27 @@ public:
     
     int addRelay( uint8_t relayPin, int16_t powerPin, bool defaultOn, uint16_t defaultMode);
 #ifdef Relays_Basis_TaskTime
+    int addTaskTimeLock( uint16_t relays, bool on, uint8_t hour, uint8_t minute);
+    int addTaskTimeUnlock( uint16_t relays, bool on, uint8_t hour, uint8_t minute);
+    int addTaskTimeSensors( uint16_t relays, bool on, uint8_t hour, uint8_t minute);
     int addTaskTime( uint16_t relays, bool on, uint8_t hour, uint8_t minute);
 #else
     int addTaskTime( uint16_t relays, bool on, uint8_t month, uint8_t day_of_month, uint8_t day_of_week, uint8_t hour, uint8_t minute);
 #endif Relays_Basis_TaskTime
     int addTaskTemperature( uint16_t relays, bool on, uint8_t operatortype, int value);
+
+    int addTaskTemperature( uint16_t relays, bool on, uint8_t operatortype, int value, uint8_t mode);
     
+#ifdef RelayTask_Humidity
     int addTaskHumidity( uint16_t relays, bool on, uint8_t operatortype, int value);
 
+    int addTaskHumidity( uint16_t relays, bool on, uint8_t operatortype, int value, uint8_t mode);
+#endif RelayTask_Humidity
+
     int addTaskLight( uint16_t relays, bool on, uint8_t operatortype, int value);
+
+    int addTaskLight( uint16_t relays, bool on, uint8_t operatortype, int value, uint8_t mode);
+
 #ifdef Relays_trigger
     int addTaskTrigger( uint16_t relays, bool on, uint8_t delayType, uint16_t delay);
 #endif Relays_trigger
@@ -127,14 +137,28 @@ public:
     
     void relayOn(uint8_t relayPin);
     
+    void relayOn(uint8_t relayPin, uint8_t mode);
+    
     void relayOn(int relayID);
+
+    void relayOn(int relayID, uint8_t mode);
     
     void relaysOff();
 
     void relayOff(int relayID);
 
+    void relayOff(int relayID, uint8_t mode);
+    
     void relayOff(uint8_t relayPin);
 
+    void relayOff(uint8_t relayPin, uint8_t mode);
+
+    void relaysLock(bool locked);
+    
+    void relayLock(int relayID, bool locked);
+    
+    void relayLock(uint8_t relayPin, bool locked);
+    
     void powerOffset(uint8_t powerPin, int8_t offset);
     
     uint8_t relayPin();
@@ -169,7 +193,8 @@ public:
     
     void putXBeePower(ByteBuffer *buffer);
     
-
+    void resetStatus();
+    
 private:
     RelayStatus     _status[_RELAYS_MAX_STATUS_SIZE];
     RelayTask       _task[_RELAYS_MAX_TASK_SIZE];

@@ -68,22 +68,24 @@ void RelayTask::setTime(uint8_t month, uint8_t day_of_month, uint8_t day_of_week
 }
 #endif Relays_Basis_TaskTime
 
-void RelayTask::setTemperature(uint8_t operatortype, int value)
+void RelayTask::setTemperature(uint8_t operatortype, int value, uint8_t mode)
 {
     setTask(RELAYTASK_TASK_TEMPERATURE);
-    _data = operatorToData(operatortype, value);
+    _data = operatorToData(operatortype, value, mode);
 }
 
-void RelayTask::setHumidity(uint8_t operatortype, int value)
+#ifdef RelayTask_Humidity
+void RelayTask::setHumidity(uint8_t operatortype, int value, uint8_t mode)
 {
     setTask(RELAYTASK_TASK_HUMIDITY);
-    _data = operatorToData(operatortype, value);
+    _data = operatorToData(operatortype, value, mode);
 }
+#endif RelayTask_Humidity
 
-void RelayTask::setLight(uint8_t operatortype, int value)
+void RelayTask::setLight(uint8_t operatortype, int value, uint8_t mode)
 {
     setTask(RELAYTASK_TASK_LIGHT);
-    _data = operatorToData(operatortype, value);
+    _data = operatorToData(operatortype, value, mode);
 }
 
 void RelayTask::setTrigger(uint8_t delayType, uint16_t delay)
@@ -122,6 +124,11 @@ bool RelayTask::setTimeout(uint8_t delayType, uint16_t delay)
 void RelayTask::setOn(bool on)
 {
     bitWrite(_status, RELAYTASK_STATUS_ON_BIT, on);
+}
+
+void RelayTask::setRelayOn(bool on)
+{
+    bitWrite(_status, RELAYTASK_STATUS_RELAY_ON_BIT, on);
 }
 
 bool RelayTask::isSetup()
@@ -189,9 +196,8 @@ uint32_t RelayTask::timeToData(uint8_t month, uint8_t day_of_month, uint8_t day_
     return data;
 }
 
-uint32_t RelayTask::operatorToData(uint8_t operatortype, int value)
+uint32_t RelayTask::operatorToData(uint8_t operatortype, int value, uint8_t mode)
 {
-    uint8_t mode = 1;
     bool positive = true;
     uint8_t byteValue = 0;
     uint8_t valueType = RELAYTASK_DATA_VALUETYPE_A;
@@ -260,7 +266,6 @@ bool RelayTask::checkOperatorOnValue(int checkValue)
         bool    positive        = (_data & RELAYTASK_DATA_OPERATOR_SIGNED) >> 3;
         uint8_t valueType       = (_data & RELAYTASK_DATA_OPERATOR_VALUETYPE) >> 4;
         uint8_t value           = (_data & RELAYTASK_DATA_OPERATOR_VALUE) >> 6;
-        uint8_t mode            = (_data & RELAYTASK_DATA_OPERATOR_MODE) >> 14;
         int operatorValue = 0;
         switch (valueType) {
             case RELAYTASK_DATA_VALUETYPE_A:
