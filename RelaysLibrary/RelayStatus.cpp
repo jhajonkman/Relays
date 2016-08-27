@@ -124,6 +124,11 @@ void RelayStatus::restore(at24Element_t *relay)
     Serial.print(",D=");
     Serial.println(relay->defaultmode,HEX);
 #endif
+#ifdef Relays_reset
+    if (relay-> >= RELAYSTATUS_STATUS_ERROR) {
+        reset();
+    }
+#endif
     _defaultMode = relay->defaultmode;
     if( relay->status & RELAYSTATUS_STATUS_ON) {
         relayOn(RELAYSTATUS_MODE_RESTORE);
@@ -134,6 +139,11 @@ void RelayStatus::restore(at24Element_t *relay)
 
 void RelayStatus::backup(at24Element_t *relay)
 {
+#ifdef Relays_reset
+    if (_status >= RELAYSTATUS_STATUS_ERROR) {
+        reset();
+    }
+#endif
     relay->status = _status;
     relay->mode = _mode;
     relay->defaultmode = _defaultMode;
@@ -478,8 +488,10 @@ uint16_t RelayStatus::getTimerDelay()
 
 uint8_t RelayStatus::putXBeeStatus(ByteBuffer *buffer)
 {
+    uint8_t value = _status & 0x00FF;
+    
     if( buffer->getFreeSize() > 0 ) {
-        buffer->put(_status);
+        buffer->put(value);
         return 1;
     }
     return 0;
@@ -487,8 +499,9 @@ uint8_t RelayStatus::putXBeeStatus(ByteBuffer *buffer)
 
 uint8_t RelayStatus::putXBeePower(ByteBuffer *buffer)
 {
+    uint16_t value = _power & 0xFFFF;
     if( buffer->getSize() > 0 ) {
-        buffer->putU16(_power);
+        buffer->putU16(value);
         return 1;
     }
     return 0;
@@ -597,7 +610,7 @@ uint16_t RelayStatus::_getRawPower()
     Serial.print(_power);
     Serial.println();
 #endif
-    return _power;
+    return _power & 0xFFFF;
 }
 #endif
 

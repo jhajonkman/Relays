@@ -17,6 +17,7 @@
 
 #define Relays_trigger
 //#define Relays_Timer
+#define Relays_reset
 
 //#define Relays_debug
 //#define Relays_set_debug

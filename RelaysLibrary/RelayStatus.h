@@ -27,6 +27,9 @@
 
 //#define RelayStatus_power_turning
 
+#ifdef Relays_reset
+extern void reset();
+#endif
 
 //#define RelayStatus_debug
 //#define RelayStatus_debug_power
@@ -59,6 +62,7 @@
 #define RELAYSTATUS_STATUS_LOCKED       0x0040 // 1 bit  ........ .1......
 #define RELAYSTATUS_STATUS_DISABLED     0x0080 // 1 bit  ........ 1.......
 #define RELAYSTATUS_STATUS_NOSENSORS    0x0100 // 1 bit  .......1 ........
+#define RELAYSTATUS_STATUS_ERROR        0x0200 // 1 bit  ......1. ........
 
 
 #define RELAYSTATUS_STATUS_SETUP_BIT        0
