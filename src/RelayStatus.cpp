@@ -6,6 +6,7 @@
 //
 //  Relays
 //  Created by jeroenjonkman on 13-06-15
+//  Modified by jeroenjonkman on 31-07-19
 // 
 
 #include <RelayStatus.h>
@@ -55,10 +56,15 @@ void RelayStatus::setup(uint8_t relayPin, int powerPin, uint16_t defaultMode, bo
     Serial.print(", defaultOn=");
     Serial.println(defaultOn,BIN);
 #endif
+    _status         = 0;
     _relayPin       = relayPin;
     _powerPin       = powerPin & 0x00FF;
-    _mode           = defaultMode;
-    _defaultMode    = defaultMode;
+    _mode           = defaultMode & 0x00FF;
+    _defaultMode    = defaultMode & 0x00FF;
+#ifdef RelayStatus_power
+    _power          = 0;
+    _powerOffset    = 0;
+#endif
     if (_relayPin > 0) {
         pinMode(_relayPin,OUTPUT);
         digitalWrite(_relayPin,_RELAYSTATUS_OFF);
@@ -92,6 +98,11 @@ void RelayStatus::setup(uint8_t relayPin, int powerPin, uint16_t defaultMode, bo
         }
     }
     bitWrite(_status,RELAYSTATUS_STATUS_SETUP_BIT,true);
+#ifdef Relays_reset
+    if (_status == 0 || _status >= RELAYSTATUS_STATUS_ERROR) {
+        reset();
+    }
+#endif
 }
 
 void RelayStatus::loop()
@@ -125,7 +136,7 @@ void RelayStatus::restore(at24Element_t *relay)
     Serial.println(relay->defaultmode,HEX);
 #endif
 #ifdef Relays_reset
-    if (relay-> >= RELAYSTATUS_STATUS_ERROR) {
+    if (relay->status == 0 || relay->status >= RELAYSTATUS_STATUS_ERROR) {
         reset();
     }
 #endif
@@ -139,11 +150,6 @@ void RelayStatus::restore(at24Element_t *relay)
 
 void RelayStatus::backup(at24Element_t *relay)
 {
-#ifdef Relays_reset
-    if (_status >= RELAYSTATUS_STATUS_ERROR) {
-        reset();
-    }
-#endif
     relay->status = _status;
     relay->mode = _mode;
     relay->defaultmode = _defaultMode;
@@ -411,6 +417,12 @@ bool RelayStatus::isSensorsOn() {
     // Negative switch
     return !bitRead(_status,RELAYSTATUS_STATUS_NOSENSORS_BIT);
 }
+
+bool RelayStatus::isOke() {
+    uint8_t status = _status & 0x00FF;
+    return status > 0x01 && status < 0xFF;
+}
+
 
 void RelayStatus::setTimer(uint8_t delayType, uint16_t delay)
 {

@@ -6,6 +6,7 @@
 //
 //  Relays
 //  Created by jeroenjonkman on 13-06-15
+//  Modified by jeroenjonkman on 31-07-19
 // 
 
 
@@ -49,6 +50,7 @@
 #include <RelayTask.h>
 #ifdef Relays_at24
 #include <AT24.h>
+#define RELAYS_AT24_RETRY           5
 #endif Relays_at24
 #include <JRTC.h>
 #include <Time.h>
@@ -93,6 +95,7 @@ public:
 #endif
     
     int addRelay( uint8_t relayPin, int16_t powerPin, bool defaultOn, uint16_t defaultMode);
+    int addRelay( uint8_t relayPin, int16_t powerPin, bool defaultOn, uint16_t defaultMode, bool setOn);
 #ifdef Relays_Basis_TaskTime
     int addTaskTimeLock( uint16_t relays, bool on, uint8_t hour, uint8_t minute);
     int addTaskTimeUnlock( uint16_t relays, bool on, uint8_t hour, uint8_t minute);
@@ -231,6 +234,7 @@ private:
     void            saveStatus();
 #endif Relays_save
 #ifdef Relays_at24
+    void            restoreStatusAt24();
     void            saveStatusAt24();
 #endif Relays_at24
 #ifdef Relays_print

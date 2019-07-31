@@ -7,26 +7,36 @@
 	objects = {
 
 /* Begin PBXFileReference section */
+		0E17352822F23FEA00CCD188 /* library.properties */ = {isa = PBXFileReference; lastKnownFileType = text; path = library.properties; sourceTree = "<group>"; };
 		0EF42AAC1B3999F200F2E270 /* rsync.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = rsync.sh; sourceTree = "<group>"; };
-		0EFE94391B38793100A3A900 /* Relays.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Relays.cpp; path = RelaysLibrary/Relays.cpp; sourceTree = "<group>"; };
-		0EFE943A1B38793100A3A900 /* Relays.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Relays.h; path = RelaysLibrary/Relays.h; sourceTree = "<group>"; };
-		0EFE943B1B38793100A3A900 /* RelayStatus.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RelayStatus.cpp; path = RelaysLibrary/RelayStatus.cpp; sourceTree = "<group>"; };
-		0EFE943C1B38793100A3A900 /* RelayStatus.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RelayStatus.h; path = RelaysLibrary/RelayStatus.h; sourceTree = "<group>"; };
-		0EFE943D1B38793100A3A900 /* RelayTask.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RelayTask.cpp; path = RelaysLibrary/RelayTask.cpp; sourceTree = "<group>"; };
-		0EFE943E1B38793100A3A900 /* RelayTask.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RelayTask.h; path = RelaysLibrary/RelayTask.h; sourceTree = "<group>"; };
+		0EFE94391B38793100A3A900 /* Relays.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Relays.cpp; sourceTree = "<group>"; };
+		0EFE943A1B38793100A3A900 /* Relays.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Relays.h; sourceTree = "<group>"; };
+		0EFE943B1B38793100A3A900 /* RelayStatus.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = RelayStatus.cpp; sourceTree = "<group>"; };
+		0EFE943C1B38793100A3A900 /* RelayStatus.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RelayStatus.h; sourceTree = "<group>"; };
+		0EFE943D1B38793100A3A900 /* RelayTask.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = RelayTask.cpp; sourceTree = "<group>"; };
+		0EFE943E1B38793100A3A900 /* RelayTask.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RelayTask.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
-		0EC0090D1B2C275600F0A508 = {
+		0E17352622F23D6700CCD188 /* src */ = {
 			isa = PBXGroup;
 			children = (
-				0EF42AAC1B3999F200F2E270 /* rsync.sh */,
 				0EFE94391B38793100A3A900 /* Relays.cpp */,
 				0EFE943A1B38793100A3A900 /* Relays.h */,
 				0EFE943B1B38793100A3A900 /* RelayStatus.cpp */,
 				0EFE943C1B38793100A3A900 /* RelayStatus.h */,
 				0EFE943D1B38793100A3A900 /* RelayTask.cpp */,
 				0EFE943E1B38793100A3A900 /* RelayTask.h */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		0EC0090D1B2C275600F0A508 = {
+			isa = PBXGroup;
+			children = (
+				0E17352822F23FEA00CCD188 /* library.properties */,
+				0E17352622F23D6700CCD188 /* src */,
+				0EF42AAC1B3999F200F2E270 /* rsync.sh */,
 			);
 			sourceTree = "<group>";
 		};
@@ -36,7 +46,7 @@
 		0EC0090E1B2C275600F0A508 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0630;
+				LastUpgradeCheck = 1010;
 			};
 			buildConfigurationList = 0EC009111B2C275600F0A508 /* Build configuration list for PBXProject "Relays" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -58,14 +68,66 @@
 		0EC0090F1B2C275600F0A508 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				ONLY_ACTIVE_ARCH = YES;
 			};
 			name = Debug;
 		};
 		0EC009101B2C275600F0A508 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
 			};
 			name = Release;
 		};

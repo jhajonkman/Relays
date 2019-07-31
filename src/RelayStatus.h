@@ -6,6 +6,7 @@
 //
 //  Relays
 //  Created by jeroenjonkman on 13-06-15
+//  Modified by jeroenjonkman on 31-07-19
 // 
 
 
@@ -55,7 +56,7 @@ extern void reset();
 #define _RELAYSTATUS_POWER_CYCLES       8
 
 #define RELAYSTATUS_STATUS_SETUP        0x0001 // 1 bit  ........ .......1
-#define RELAYSTATUS_STATUS_ON           0x0002 // 1 bit  ..............1.
+#define RELAYSTATUS_STATUS_ON           0x0002 // 1 bit  ........ ......1.
 #define RELAYSTATUS_STATUS_DEFAULT_ ON  0x0004 // 1 bit  ........ .....1..
 #define RELAYSTATUS_STATUS_POWER_ON     0x0008 // 1 bit  ........ ....1...
 #define RELAYSTATUS_STATUS_POWER_TYPE   0x0030 // 2 bit  ........ ..11....
@@ -167,6 +168,8 @@ public:
     bool isPower();
 
     void setTimer(uint8_t delayType, uint16_t delay);
+    
+    bool isOke();
     
 #ifdef RelayStatus_power
     uint16_t getPower();

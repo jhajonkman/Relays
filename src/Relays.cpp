@@ -6,6 +6,7 @@
 //
 //  Relays
 //  Created by jeroenjonkman on 13-06-15
+//  Modified by jeroenjonkman on 31-07-19
 // 
 
 
@@ -35,7 +36,7 @@ void Relays::setup()
     at24 = AT24();
     _save.lasttime = 0;
     if (at24.getDataStatus()) {
-        at24.getData(&_save);
+        restoreStatusAt24();
         at24.setDataStatus(false);
     }
 #endif Relays_at24
@@ -459,6 +460,11 @@ void Relays::loopPower()
 
 int Relays::addRelay( uint8_t relayPin, int16_t powerPin, bool defaultOn, uint16_t defaultMode)
 {
+    addRelay(relayPin,powerPin,defaultOn,defaultMode,false);
+}
+
+int Relays::addRelay( uint8_t relayPin, int16_t powerPin, bool defaultOn, uint16_t defaultMode, bool setOn)
+{
     if ( _statusSize < _RELAYS_MAX_STATUS_SIZE ) {
 #ifdef Relays_debug
             Serial.print("Relays::add: relayPin=");
@@ -493,7 +499,15 @@ int Relays::addRelay( uint8_t relayPin, int16_t powerPin, bool defaultOn, uint16
 #ifdef Relays_at24
         if( _save.lasttime > 0 && _statusSize < AT24_STATUS_SIZE) {
             status.restore(&_save.relay[_statusSize]);
+        } else {
+            if (setOn) {
+                status.relayOn();
+            }
         }
+#else Relays_at24
+    if (setOn) {
+        status.relayOn();
+    }
 #endif Relays_at24
         _status[_statusSize] = status;
     } else {
@@ -706,7 +720,7 @@ uint16_t Relays::power() {
         Serial.print(", count=");
         Serial.println(count);
 #endif
-    return max(totalPower / count,0);
+    return max(totalPower / count,0) & 0xFFFF;
 }
 
 void Relays::setTemperature(int temperature)
@@ -1018,7 +1032,11 @@ void Relays::resetStatus()
 #ifdef Relays_save
 void Relays::saveStatus() {
     _save.value = 0;
-    RTC.setDataStatus(true);
+    for( uint8_t i = 0 ; i < min(_statusSize,15) ; i++ ) {
+        if (!_status[i].isOke()) {
+            reset();
+        }
+    }
     for( uint8_t i = 0 ; i < min(_statusSize,15) ; i++ ) {
         if (_status[i].isOn()) {
             _save.value |= (1 << i) ;
@@ -1026,20 +1044,49 @@ void Relays::saveStatus() {
     }
     _save.lasttime = now();
     RTC.setData(&_save);
+    RTC.setDataStatus(true);
 }
 #endif
 
 #ifdef Relays_at24
+void Relays::restoreStatusAt24() {
+    _save.lasttime = 0;
+    uint8_t at24_retry = RELAYS_AT24_RETRY;
+    byte at24_state = 0;
+    do {
+        at24_state = at24.getData(&_save);
+    } while (--at24_retry > 0 && at24_state != 0);
+    if (at24_state != 0) {
+        _save.lasttime = 0;
+        at24.setDataStatus(false);
+    }
+}
+
 void Relays::saveStatusAt24() {
-    at24.setDataStatus(true);
+    for( uint8_t i = 0 ; i < min(_statusSize,15) ; i++ ) {
+        if (!_status[i].isOke()) {
+            reset();
+        }
+    }
     for( uint8_t i = 0 ; i < min(_statusSize,AT24_STATUS_SIZE) ; i++ ) {
         _status[i].backup(&_save.relay[i]);
     }
     _save.lasttime = now();
-    at24.setData(&_save);
-    if (at24.getDataStatus() && _looper > 15) {
-        at24.getData(&_save);
+    uint8_t at24_retry = RELAYS_AT24_RETRY;
+    byte at24_state = 0;
+    do {
+        at24_state = at24.setData(&_save);
+    } while (--at24_retry > 0 && at24_state != 0);
+    if (at24_state != 0) {
+        at24.setDataStatus(false);
+/*
+    } else {
+        if (at24.getDataStatus() && _looper > 15) {
+            at24.getData(&_save);
+        }
+ */
     }
+    at24.setDataStatus(true);
 }
 #endif
 
